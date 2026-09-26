@@ -1,0 +1,7 @@
+streamlit
+deep-translator
+Pillow
+reportlab
+SQLAlchemy
+Werkzeug
+psycopg2-binary
