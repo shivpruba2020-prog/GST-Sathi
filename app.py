@@ -24,7 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # ============================================================
-# GST SATHI - COMPLETE SINGLE FILE APP
+# SHIVPRUBA BILLING - COMPLETE SINGLE FILE APP
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -49,7 +49,7 @@ ICON_BYTES = make_icon_bytes()
 APP_ICON = Image.open(io.BytesIO(ICON_BYTES))
 
 st.set_page_config(
-    page_title="GST Sathi",
+    page_title="SHIVPRUBA BILLING",
     page_icon=APP_ICON,
     layout="wide",
     initial_sidebar_state="expanded",
@@ -80,7 +80,7 @@ def inject_mobile_icon():
 
             ensure('icon');
             ensure('apple-touch-icon');
-            window.parent.document.title = 'GST Sathi';
+            window.parent.document.title = 'SHIVPRUBA BILLING';
             </script>
             """,
             height=0,
@@ -295,7 +295,7 @@ EN = {
     "password_short": "Password must be at least 6 characters.",
     "password_mismatch": "Passwords do not match.",
     "account_created": "Account created successfully.",
-    "welcome": "Welcome to GST Sathi",
+    "welcome": "Welcome to SHIVPRUBA BILLING",
     "business_setup": "Business Setup",
     "business_setup_help":
         "Enter your business details once. "
@@ -389,7 +389,7 @@ EN = {
 
     "phone_install": "Use on Phone",
     "phone_install_help":
-        "Open the public GST Sathi link in Chrome or Safari, "
+        "Open the public SHIVPRUBA BILLING link in Chrome or Safari, "
         "then choose Add to Home Screen.",
 
     "download_backup": "Download My Backup",
@@ -484,7 +484,7 @@ EN = {
     "delete_payment": "Delete Payment",
     "payment_deleted": "Payment deleted successfully.",
 
-    "version": "Version 4.3 | GST Sathi",
+    "version": "Version 4.3 | SHIVPRUBA BILLING",
 }
 
 STATES = [
@@ -2094,7 +2094,7 @@ if (
     )
 
 st.sidebar.title(
-    "🧾 GST Sathi"
+    "🧾 SHIVPRUBA BILLING"
 )
 
 # ============================================================
@@ -2488,7 +2488,7 @@ def make_invoice_pdf(
     width, height = A4
 
     pdf.setTitle(
-        f"GST Sathi - "
+        f"SHIVPRUBA BILLING - "
         f"{inv['invoice_number']}"
     )
 
@@ -2897,7 +2897,7 @@ def make_invoice_pdf(
         pdf,
         18 * mm,
         18 * mm,
-        "Generated with GST Sathi",
+        "Generated with SHIVPRUBA BILLING",
         8,
     )
 
