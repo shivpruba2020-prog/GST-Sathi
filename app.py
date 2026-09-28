@@ -46,6 +46,8 @@ def make_icon_bytes():
     return buf.getvalue()
 
 ICON_BYTES = make_icon_bytes()
+ICON_FILE = BASE_DIR / "shivpruba_billing_icon_final.png"
+ICON_BYTES = ICON_FILE.read_bytes()
 APP_ICON = Image.open(io.BytesIO(ICON_BYTES))
 
 st.set_page_config(
