@@ -675,7 +675,7 @@ button {
         .block-container {
             padding-left: .45rem;
             padding-right: .45rem;
-            padding-top: .5rem;
+            padding-top: 4rem;
         }
 
         h1 {
