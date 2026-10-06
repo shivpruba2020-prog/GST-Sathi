@@ -47,7 +47,7 @@ def make_icon():
 APP_ICON = make_icon()
 st.set_page_config(
     page_title=APP_NAME,
-    page_icon=APP_ICON,
+    page_icon="shivpruba_billing_icon_final.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
