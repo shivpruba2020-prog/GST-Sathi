@@ -2,8 +2,9 @@ import io
 import json
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 import streamlit as st
 from PIL import Image, ImageDraw
@@ -26,7 +27,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 BASE_DIR = Path(__file__).resolve().parent
 LOCAL_DB_FILE = BASE_DIR / "gst_sathi.db"
 APP_NAME = "SHIVPRUBA BILLING"
-APP_VERSION = "Version 5.0 | SHIVPRUBA BILLING"
+APP_VERSION = "Version 5.2 | SHIVPRUBA BILLING"
 
 
 def now_naive():
@@ -98,6 +99,8 @@ EN = {
     "stock": "Stock",
     "invoice_history": "Invoice History",
     "purchase_history": "Purchase History",
+    "sales_return": "Sales Return",
+"purchase_return": "Purchase Return",
     "reports": "Reports",
     "settings": "Settings",
     "total_invoices": "Total Invoices",
@@ -260,7 +263,8 @@ TR["mr"] = {
     "save_get_started": "सेव्ह करा आणि सुरू करा", "company_required": "कंपनीचे नाव आवश्यक आहे.",
     "dashboard": "डॅशबोर्ड", "new_invoice": "नवीन बिल", "purchases": "खरेदी / स्टॉक इन", "customers": "ग्राहक",
     "customer_ledger": "ग्राहक खातेवही", "suppliers": "पुरवठादार", "products": "उत्पादने", "stock": "स्टॉक",
-    "invoice_history": "बिल इतिहास", "purchase_history": "खरेदी इतिहास", "reports": "अहवाल", "settings": "सेटिंग्ज",
+    "invoice_history": "बिल इतिहास", "purchase_history": "खरेदी इतिहास","sales_return": "विक्री परतावा",
+"purchase_return": "खरेदी परतावा", "reports": "अहवाल", "settings": "सेटिंग्ज",
     "total_invoices": "एकूण बिले", "total_sales": "एकूण विक्री", "today_invoices": "आजची बिले", "total_gst": "एकूण GST",
     "total_purchases": "एकूण खरेदी", "today_purchases": "आजची खरेदी", "stock_value": "स्टॉक किंमत", "low_stock": "कमी स्टॉक",
     "recent_invoices": "अलीकडील बिले", "recent_purchases": "अलीकडील खरेदी", "no_invoices": "अजून बिले नाहीत.", "no_purchases": "अजून खरेदी नाही.",
@@ -490,6 +494,855 @@ TR["pa"] = {
     "backup": "ਬੈਕਅਪ", "download_backup": "ਮੇਰਾ ਬੈਕਅਪ ਡਾਊਨਲੋਡ", "backup_help": "ਕਾਰੋਬਾਰ, ਗਾਹਕ, ਸਪਲਾਇਰ, ਉਤਪਾਦ, ਖਰੀਦ, ਸਟਾਕ, ਬਿੱਲ ਅਤੇ ਭੁਗਤਾਨ ਦਾ ਬੈਕਅਪ ਡਾਊਨਲੋਡ ਕਰੋ।", "use_on_phone": "ਫੋਨ 'ਤੇ ਵਰਤੋ", "phone_help": "ਪਬਲਿਕ SHIVPRUBA BILLING ਲਿੰਕ Chrome ਜਾਂ Safari ਵਿੱਚ ਖੋਲ੍ਹੋ ਅਤੇ Add to Home Screen ਚੁਣੋ।",
     "product": "ਉਤਪਾਦ", "service": "ਸੇਵਾ", "purchase": "ਖਰੀਦ", "sale": "ਵਿਕਰੀ", "opening": "ਸ਼ੁਰੂਆਤ", "adjustment": "ਸੋਧ", "search": "ਖੋਜੋ", "invoices": "ਬਿੱਲ", "payments": "ਭੁਗਤਾਨ",
 }
+# ============================================================
+# V5.1 - SALES RETURN / PURCHASE RETURN LANGUAGE LABELS
+# ============================================================
+
+TR["hi"].update({
+    "sales_return": "बिक्री वापसी",
+    "purchase_return": "खरीद वापसी",
+})
+
+TR["gu"].update({
+    "sales_return": "વેચાણ પરત",
+    "purchase_return": "ખરીદી પરત",
+})
+
+TR["bn"].update({
+    "sales_return": "বিক্রয় ফেরত",
+    "purchase_return": "ক্রয় ফেরত",
+})
+
+TR["ta"].update({
+    "sales_return": "விற்பனைத் திருப்பம்",
+    "purchase_return": "கொள்முதல் திருப்பம்",
+})
+
+TR["te"].update({
+    "sales_return": "అమ్మకాల వాపసు",
+    "purchase_return": "కొనుగోలు వాపసు",
+})
+
+TR["kn"].update({
+    "sales_return": "ಮಾರಾಟ ವಾಪಸಿ",
+    "purchase_return": "ಖರೀದಿ ವಾಪಸಿ",
+})
+
+TR["ml"].update({
+    "sales_return": "വിൽപ്പന മടക്കം",
+    "purchase_return": "വാങ്ങൽ മടക്കം",
+})
+
+TR["pa"].update({
+    "sales_return": "ਵਿਕਰੀ ਵਾਪਸੀ",
+    "purchase_return": "ਖਰੀਦ ਵਾਪਸੀ",
+})
+# ============================================================
+# V5.3 - EXPENSES LANGUAGE LABELS
+# ============================================================
+
+TR["en"].update({
+    "expenses": "Expenses",
+    "expense_date": "Date",
+    "expense_category": "Category",
+    "expense_amount": "Amount",
+    "expense_note": "Note",
+    "save_expense": "Save Expense",
+    "expense_history": "Expense History",
+    "no_expenses": "No expenses found.",
+    "expense_saved": "Expense saved successfully.",
+    "expense_amount_required": "Please enter an amount greater than 0.",
+})
+
+TR["hi"].update({
+    "expenses": "खर्च",
+    "expense_date": "तारीख",
+    "expense_category": "श्रेणी",
+    "expense_amount": "राशि",
+    "expense_note": "टिप्पणी",
+    "save_expense": "खर्च सहेजें",
+    "expense_history": "खर्च इतिहास",
+    "no_expenses": "कोई खर्च नहीं मिला।",
+    "expense_saved": "खर्च सफलतापूर्वक सहेजा गया।",
+    "expense_amount_required": "कृपया 0 से अधिक राशि दर्ज करें।",
+})
+
+TR["mr"].update({
+    "expenses": "खर्च",
+    "expense_date": "दिनांक",
+    "expense_category": "श्रेणी",
+    "expense_amount": "रक्कम",
+    "expense_note": "नोंद",
+    "save_expense": "खर्च जतन करा",
+    "expense_history": "खर्च इतिहास",
+    "no_expenses": "कोणताही खर्च आढळला नाही.",
+    "expense_saved": "खर्च यशस्वीपणे जतन झाला.",
+    "expense_amount_required": "कृपया 0 पेक्षा जास्त रक्कम टाका.",
+})
+
+TR["gu"].update({
+    "expenses": "ખર્ચ",
+    "expense_date": "તારીખ",
+    "expense_category": "શ્રેણી",
+    "expense_amount": "રકમ",
+    "expense_note": "નોંધ",
+    "save_expense": "ખર્ચ સાચવો",
+    "expense_history": "ખર્ચ ઇતિહાસ",
+    "no_expenses": "કોઈ ખર્ચ મળ્યો નથી.",
+    "expense_saved": "ખર્ચ સફળતાપૂર્વક સાચવાયો.",
+    "expense_amount_required": "કૃપા કરીને 0 કરતાં વધુ રકમ દાખલ કરો.",
+})
+
+TR["bn"].update({
+    "expenses": "খরচ",
+    "expense_date": "তারিখ",
+    "expense_category": "বিভাগ",
+    "expense_amount": "পরিমাণ",
+    "expense_note": "নোট",
+    "save_expense": "খরচ সংরক্ষণ করুন",
+    "expense_history": "খরচের ইতিহাস",
+    "no_expenses": "কোনো খরচ পাওয়া যায়নি।",
+    "expense_saved": "খরচ সফলভাবে সংরক্ষিত হয়েছে।",
+    "expense_amount_required": "অনুগ্রহ করে ০-এর বেশি পরিমাণ লিখুন।",
+})
+
+TR["ta"].update({
+    "expenses": "செலவுகள்",
+    "expense_date": "தேதி",
+    "expense_category": "வகை",
+    "expense_amount": "தொகை",
+    "expense_note": "குறிப்பு",
+    "save_expense": "செலவை சேமிக்கவும்",
+    "expense_history": "செலவு வரலாறு",
+    "no_expenses": "செலவுகள் எதுவும் இல்லை.",
+    "expense_saved": "செலவு வெற்றிகரமாக சேமிக்கப்பட்டது.",
+    "expense_amount_required": "0-ஐ விட அதிகமான தொகையை உள்ளிடவும்.",
+})
+
+TR["te"].update({
+    "expenses": "ఖర్చులు",
+    "expense_date": "తేదీ",
+    "expense_category": "వర్గం",
+    "expense_amount": "మొత్తం",
+    "expense_note": "గమనిక",
+    "save_expense": "ఖర్చును సేవ్ చేయండి",
+    "expense_history": "ఖర్చుల చరిత్ర",
+    "no_expenses": "ఖర్చులు ఏవీ కనబడలేదు.",
+    "expense_saved": "ఖర్చు విజయవంతంగా సేవ్ చేయబడింది.",
+    "expense_amount_required": "దయచేసి 0 కంటే ఎక్కువ మొత్తాన్ని నమోదు చేయండి.",
+})
+
+TR["kn"].update({
+    "expenses": "ವೆಚ್ಚಗಳು",
+    "expense_date": "ದಿನಾಂಕ",
+    "expense_category": "ವರ್ಗ",
+    "expense_amount": "ಮೊತ್ತ",
+    "expense_note": "ಟಿಪ್ಪಣಿ",
+    "save_expense": "ವೆಚ್ಚವನ್ನು ಉಳಿಸಿ",
+    "expense_history": "ವೆಚ್ಚ ಇತಿಹಾಸ",
+    "no_expenses": "ಯಾವುದೇ ವೆಚ್ಚಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+    "expense_saved": "ವೆಚ್ಚ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.",
+    "expense_amount_required": "ದಯವಿಟ್ಟು 0 ಕ್ಕಿಂತ ಹೆಚ್ಚಿನ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ.",
+})
+
+TR["ml"].update({
+    "expenses": "ചെലവുകൾ",
+    "expense_date": "തീയതി",
+    "expense_category": "വിഭാഗം",
+    "expense_amount": "തുക",
+    "expense_note": "കുറിപ്പ്",
+    "save_expense": "ചെലവ് സംരക്ഷിക്കുക",
+    "expense_history": "ചെലവ് ചരിത്രം",
+    "no_expenses": "ചെലവുകളൊന്നും കണ്ടെത്തിയില്ല.",
+    "expense_saved": "ചെലവ് വിജയകരമായി സംരക്ഷിച്ചു.",
+    "expense_amount_required": "ദയവായി 0-ൽ കൂടുതലുള്ള തുക നൽകുക.",
+})
+
+TR["pa"].update({
+    "expenses": "ਖਰਚੇ",
+    "expense_date": "ਤਾਰੀਖ",
+    "expense_category": "ਸ਼੍ਰੇਣੀ",
+    "expense_amount": "ਰਕਮ",
+    "expense_note": "ਨੋਟ",
+    "save_expense": "ਖਰਚਾ ਸੰਭਾਲੋ",
+    "expense_history": "ਖਰਚਿਆਂ ਦਾ ਇਤਿਹਾਸ",
+    "no_expenses": "ਕੋਈ ਖਰਚਾ ਨਹੀਂ ਮਿਲਿਆ।",
+    "expense_saved": "ਖਰਚਾ ਸਫਲਤਾਪੂਰਵਕ ਸੰਭਾਲਿਆ ਗਿਆ।",
+    "expense_amount_required": "ਕਿਰਪਾ ਕਰਕੇ 0 ਤੋਂ ਵੱਧ ਰਕਮ ਦਰਜ ਕਰੋ।",
+})
+
+# ============================================================
+# V5.3 - REPORT EXPENSE / PROFIT LABELS
+# ============================================================
+
+TR["en"].update({
+    "total_expenses": "Total Expenses",
+    "estimated_profit_loss": "Estimated Profit / Loss",
+})
+
+TR["hi"].update({
+    "total_expenses": "कुल खर्च",
+    "estimated_profit_loss": "अनुमानित लाभ / हानि",
+})
+
+TR["mr"].update({
+    "total_expenses": "एकूण खर्च",
+    "estimated_profit_loss": "अंदाजे नफा / तोटा",
+})
+
+TR["gu"].update({
+    "total_expenses": "કુલ ખર્ચ",
+    "estimated_profit_loss": "અંદાજિત નફો / નુકસાન",
+})
+
+TR["bn"].update({
+    "total_expenses": "মোট খরচ",
+    "estimated_profit_loss": "আনুমানিক লাভ / ক্ষতি",
+})
+
+TR["ta"].update({
+    "total_expenses": "மொத்த செலவுகள்",
+    "estimated_profit_loss": "மதிப்பிடப்பட்ட லாபம் / நஷ்டம்",
+})
+
+TR["te"].update({
+    "total_expenses": "మొత్తం ఖర్చులు",
+    "estimated_profit_loss": "అంచనా లాభం / నష్టం",
+})
+
+TR["kn"].update({
+    "total_expenses": "ಒಟ್ಟು ವೆಚ್ಚಗಳು",
+    "estimated_profit_loss": "ಅಂದಾಜು ಲಾಭ / ನಷ್ಟ",
+})
+
+TR["ml"].update({
+    "total_expenses": "ആകെ ചെലവുകൾ",
+    "estimated_profit_loss": "കണക്കാക്കിയ ലാഭം / നഷ്ടം",
+})
+
+TR["pa"].update({
+    "total_expenses": "ਕੁੱਲ ਖਰਚੇ",
+    "estimated_profit_loss": "ਅੰਦਾਜ਼ਨ ਲਾਭ / ਨੁਕਸਾਨ",
+})
+# ============================================================
+# V5.3 - EDIT / DELETE HISTORY LABELS
+# ============================================================
+
+TR["en"].update({
+    "edit_delete_history": "Edit / Delete History",
+    "change_history": "Change History",
+    "edit_record": "Edit Record",
+    "delete_record": "Delete Record",
+    "record_type": "Record Type",
+    "action": "Action",
+    "old_data": "Previous Data",
+    "new_data": "New Data",
+    "edited": "Edited",
+    "deleted": "Deleted",
+    "confirm_delete": "I confirm that I want to delete this record.",
+    "expense_updated": "Expense updated successfully.",
+    "expense_deleted": "Expense deleted successfully.",
+    "no_change_history": "No edit or delete history yet.",
+})
+
+TR["mr"].update({
+    "edit_delete_history": "बदल / डिलीट इतिहास",
+    "change_history": "बदल इतिहास",
+    "edit_record": "नोंद बदला",
+    "delete_record": "नोंद डिलीट करा",
+    "record_type": "नोंद प्रकार",
+    "action": "क्रिया",
+    "old_data": "जुनी माहिती",
+    "new_data": "नवीन माहिती",
+    "edited": "बदलले",
+    "deleted": "डिलीट केले",
+    "confirm_delete": "ही नोंद डिलीट करायची आहे याची मी खात्री देतो.",
+    "expense_updated": "खर्च यशस्वीपणे अपडेट झाला.",
+    "expense_deleted": "खर्च यशस्वीपणे डिलीट झाला.",
+    "no_change_history": "अजून कोणताही बदल किंवा डिलीट इतिहास नाही.",
+})
+# ============================================================
+# V5.4 - EDIT / DELETE HISTORY - REMAINING 8 LANGUAGES
+# ============================================================
+
+TR["hi"].update({
+    "edit_delete_history": "संपादन / हटाने का इतिहास",
+    "change_history": "परिवर्तन इतिहास",
+    "edit_record": "रिकॉर्ड संपादित करें",
+    "delete_record": "रिकॉर्ड हटाएं",
+    "record_type": "रिकॉर्ड प्रकार",
+    "action": "कार्रवाई",
+    "old_data": "पिछला डेटा",
+    "new_data": "नया डेटा",
+    "edited": "संपादित",
+    "deleted": "हटाया गया",
+    "confirm_delete": "मैं पुष्टि करता हूँ कि मैं यह रिकॉर्ड हटाना चाहता हूँ।",
+    "expense_updated": "खर्च सफलतापूर्वक अपडेट किया गया।",
+    "expense_deleted": "खर्च सफलतापूर्वक हटाया गया।",
+    "no_change_history": "अभी तक कोई संपादन या हटाने का इतिहास नहीं है।",
+})
+
+TR["gu"].update({
+    "edit_delete_history": "ફેરફાર / કાઢી નાખવાનો ઇતિહાસ",
+    "change_history": "ફેરફાર ઇતિહાસ",
+    "edit_record": "રેકોર્ડમાં ફેરફાર કરો",
+    "delete_record": "રેકોર્ડ કાઢી નાખો",
+    "record_type": "રેકોર્ડ પ્રકાર",
+    "action": "ક્રિયા",
+    "old_data": "પહેલાનો ડેટા",
+    "new_data": "નવો ડેટા",
+    "edited": "ફેરફાર કરેલ",
+    "deleted": "કાઢી નાખેલ",
+    "confirm_delete": "હું ખાતરી કરું છું કે હું આ રેકોર્ડ કાઢી નાખવા માંગું છું.",
+    "expense_updated": "ખર્ચ સફળતાપૂર્વક અપડેટ થયો.",
+    "expense_deleted": "ખર્ચ સફળતાપૂર્વક કાઢી નાખવામાં આવ્યો.",
+    "no_change_history": "હજુ સુધી કોઈ ફેરફાર અથવા કાઢી નાખવાનો ઇતિહાસ નથી.",
+})
+
+TR["bn"].update({
+    "edit_delete_history": "সম্পাদনা / মুছে ফেলার ইতিহাস",
+    "change_history": "পরিবর্তনের ইতিহাস",
+    "edit_record": "রেকর্ড সম্পাদনা করুন",
+    "delete_record": "রেকর্ড মুছুন",
+    "record_type": "রেকর্ডের ধরন",
+    "action": "কার্যক্রম",
+    "old_data": "পূর্ববর্তী তথ্য",
+    "new_data": "নতুন তথ্য",
+    "edited": "সম্পাদিত",
+    "deleted": "মুছে ফেলা হয়েছে",
+    "confirm_delete": "আমি নিশ্চিত করছি যে আমি এই রেকর্ডটি মুছে ফেলতে চাই।",
+    "expense_updated": "খরচ সফলভাবে আপডেট হয়েছে।",
+    "expense_deleted": "খরচ সফলভাবে মুছে ফেলা হয়েছে।",
+    "no_change_history": "এখনও কোনো সম্পাদনা বা মুছে ফেলার ইতিহাস নেই।",
+})
+
+TR["ta"].update({
+    "edit_delete_history": "திருத்தம் / நீக்கல் வரலாறு",
+    "change_history": "மாற்ற வரலாறு",
+    "edit_record": "பதிவைத் திருத்து",
+    "delete_record": "பதிவை நீக்கு",
+    "record_type": "பதிவு வகை",
+    "action": "செயல்",
+    "old_data": "முந்தைய தரவு",
+    "new_data": "புதிய தரவு",
+    "edited": "திருத்தப்பட்டது",
+    "deleted": "நீக்கப்பட்டது",
+    "confirm_delete": "இந்த பதிவை நீக்க விரும்புகிறேன் என்பதை உறுதிப்படுத்துகிறேன்.",
+    "expense_updated": "செலவு வெற்றிகரமாக புதுப்பிக்கப்பட்டது.",
+    "expense_deleted": "செலவு வெற்றிகரமாக நீக்கப்பட்டது.",
+    "no_change_history": "இதுவரை திருத்தம் அல்லது நீக்கல் வரலாறு இல்லை.",
+})
+
+TR["te"].update({
+    "edit_delete_history": "సవరింపు / తొలగింపు చరిత్ర",
+    "change_history": "మార్పుల చరిత్ర",
+    "edit_record": "రికార్డును సవరించండి",
+    "delete_record": "రికార్డును తొలగించండి",
+    "record_type": "రికార్డు రకం",
+    "action": "చర్య",
+    "old_data": "మునుపటి డేటా",
+    "new_data": "కొత్త డేటా",
+    "edited": "సవరించబడింది",
+    "deleted": "తొలగించబడింది",
+    "confirm_delete": "ఈ రికార్డును తొలగించాలని నేను నిర్ధారిస్తున్నాను.",
+    "expense_updated": "ఖర్చు విజయవంతంగా నవీకరించబడింది.",
+    "expense_deleted": "ఖర్చు విజయవంతంగా తొలగించబడింది.",
+    "no_change_history": "ఇంకా సవరింపు లేదా తొలగింపు చరిత్ర లేదు.",
+})
+
+TR["kn"].update({
+    "edit_delete_history": "ತಿದ್ದುಪಡಿ / ಅಳಿಸುವಿಕೆ ಇತಿಹಾಸ",
+    "change_history": "ಬದಲಾವಣೆ ಇತಿಹಾಸ",
+    "edit_record": "ದಾಖಲೆಯನ್ನು ತಿದ್ದುಪಡಿ ಮಾಡಿ",
+    "delete_record": "ದಾಖಲೆಯನ್ನು ಅಳಿಸಿ",
+    "record_type": "ದಾಖಲೆ ಪ್ರಕಾರ",
+    "action": "ಕ್ರಿಯೆ",
+    "old_data": "ಹಿಂದಿನ ಮಾಹಿತಿ",
+    "new_data": "ಹೊಸ ಮಾಹಿತಿ",
+    "edited": "ತಿದ್ದುಪಡಿ ಮಾಡಲಾಗಿದೆ",
+    "deleted": "ಅಳಿಸಲಾಗಿದೆ",
+    "confirm_delete": "ಈ ದಾಖಲೆಯನ್ನು ಅಳಿಸಲು ನಾನು ದೃಢೀಕರಿಸುತ್ತೇನೆ.",
+    "expense_updated": "ವೆಚ್ಚವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ.",
+    "expense_deleted": "ವೆಚ್ಚವನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ.",
+    "no_change_history": "ಇನ್ನೂ ಯಾವುದೇ ತಿದ್ದುಪಡಿ ಅಥವಾ ಅಳಿಸುವಿಕೆ ಇತಿಹಾಸ ಇಲ್ಲ.",
+})
+
+TR["ml"].update({
+    "edit_delete_history": "തിരുത്തൽ / ഇല്ലാതാക്കൽ ചരിത്രം",
+    "change_history": "മാറ്റങ്ങളുടെ ചരിത്രം",
+    "edit_record": "രേഖ തിരുത്തുക",
+    "delete_record": "രേഖ ഇല്ലാതാക്കുക",
+    "record_type": "രേഖയുടെ തരം",
+    "action": "നടപടി",
+    "old_data": "മുൻ വിവരങ്ങൾ",
+    "new_data": "പുതിയ വിവരങ്ങൾ",
+    "edited": "തിരുത്തി",
+    "deleted": "ഇല്ലാതാക്കി",
+    "confirm_delete": "ഈ രേഖ ഇല്ലാതാക്കണമെന്ന് ഞാൻ സ്ഥിരീകരിക്കുന്നു.",
+    "expense_updated": "ചെലവ് വിജയകരമായി പുതുക്കി.",
+    "expense_deleted": "ചെലവ് വിജയകരമായി ഇല്ലാതാക്കി.",
+    "no_change_history": "ഇതുവരെ തിരുത്തൽ അല്ലെങ്കിൽ ഇല്ലാതാക്കൽ ചരിത്രമില്ല.",
+})
+
+TR["pa"].update({
+    "edit_delete_history": "ਸੋਧ / ਮਿਟਾਉਣ ਦਾ ਇਤਿਹਾਸ",
+    "change_history": "ਬਦਲਾਅ ਇਤਿਹਾਸ",
+    "edit_record": "ਰਿਕਾਰਡ ਸੋਧੋ",
+    "delete_record": "ਰਿਕਾਰਡ ਮਿਟਾਓ",
+    "record_type": "ਰਿਕਾਰਡ ਦੀ ਕਿਸਮ",
+    "action": "ਕਾਰਵਾਈ",
+    "old_data": "ਪਿਛਲਾ ਡਾਟਾ",
+    "new_data": "ਨਵਾਂ ਡਾਟਾ",
+    "edited": "ਸੋਧਿਆ ਗਿਆ",
+    "deleted": "ਮਿਟਾਇਆ ਗਿਆ",
+    "confirm_delete": "ਮੈਂ ਪੁਸ਼ਟੀ ਕਰਦਾ ਹਾਂ ਕਿ ਮੈਂ ਇਹ ਰਿਕਾਰਡ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦਾ ਹਾਂ।",
+    "expense_updated": "ਖਰਚਾ ਸਫਲਤਾਪੂਰਵਕ ਅਪਡੇਟ ਹੋਇਆ।",
+    "expense_deleted": "ਖਰਚਾ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਇਆ ਗਿਆ।",
+    "no_change_history": "ਹਾਲੇ ਕੋਈ ਸੋਧ ਜਾਂ ਮਿਟਾਉਣ ਦਾ ਇਤਿਹਾਸ ਨਹੀਂ ਹੈ।",
+})
+
+# ============================================================
+# V5.1 - PURCHASE RETURN COMPLETE LANGUAGE MESSAGES
+# ============================================================
+
+TR["en"].update({
+    "return_quantity_required": "Please enter return quantity.",
+    "return_recently_saved": "This return was just saved. Please wait a few seconds.",
+    "purchase_return_saved": "Purchase Return saved",
+    "purchase_return_exists": "This Purchase Return already exists.",
+})
+
+TR["mr"].update({
+    "return_quantity_required": "परताव्याचे प्रमाण टाका.",
+    "return_recently_saved": "हा परतावा आत्ताच सेव्ह झाला आहे. कृपया काही सेकंद थांबा.",
+    "purchase_return_saved": "खरेदी परतावा सेव्ह झाला",
+    "purchase_return_exists": "हा खरेदी परतावा आधीपासून अस्तित्वात आहे.",
+})
+
+TR["hi"].update({
+    "return_quantity_required": "वापसी की मात्रा दर्ज करें।",
+    "return_recently_saved": "यह वापसी अभी सेव हुई है। कृपया कुछ सेकंड प्रतीक्षा करें।",
+    "purchase_return_saved": "खरीद वापसी सेव हुई",
+    "purchase_return_exists": "यह खरीद वापसी पहले से मौजूद है।",
+})
+
+TR["gu"].update({
+    "return_quantity_required": "પરત કરવાની માત્રા દાખલ કરો.",
+    "return_recently_saved": "આ પરત હમણાં જ સેવ થઈ છે. કૃપા કરીને થોડા સેકંડ રાહ જુઓ.",
+    "purchase_return_saved": "ખરીદી પરત સેવ થઈ",
+    "purchase_return_exists": "આ ખરીદી પરત પહેલેથી હાજર છે.",
+})
+
+TR["bn"].update({
+    "return_quantity_required": "ফেরতের পরিমাণ লিখুন।",
+    "return_recently_saved": "এই ফেরতটি এখনই সেভ হয়েছে। অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন।",
+    "purchase_return_saved": "ক্রয় ফেরত সেভ হয়েছে",
+    "purchase_return_exists": "এই ক্রয় ফেরতটি আগে থেকেই আছে।",
+})
+
+TR["ta"].update({
+    "return_quantity_required": "திருப்பி அளவை உள்ளிடவும்.",
+    "return_recently_saved": "இந்த திருப்பம் இப்போது சேமிக்கப்பட்டது. சில விநாடிகள் காத்திருக்கவும்.",
+    "purchase_return_saved": "கொள்முதல் திருப்பம் சேமிக்கப்பட்டது",
+    "purchase_return_exists": "இந்த கொள்முதல் திருப்பம் ஏற்கனவே உள்ளது.",
+})
+
+TR["te"].update({
+    "return_quantity_required": "వాపసు పరిమాణాన్ని నమోదు చేయండి.",
+    "return_recently_saved": "ఈ వాపసు ఇప్పుడే సేవ్ అయింది. దయచేసి కొన్ని సెకన్లు వేచి ఉండండి.",
+    "purchase_return_saved": "కొనుగోలు వాపసు సేవ్ అయింది",
+    "purchase_return_exists": "ఈ కొనుగోలు వాపసు ఇప్పటికే ఉంది.",
+})
+
+TR["kn"].update({
+    "return_quantity_required": "ವಾಪಸಿ ಪ್ರಮಾಣವನ್ನು ನಮೂದಿಸಿ.",
+    "return_recently_saved": "ಈ ವಾಪಸಿ ಈಗಷ್ಟೇ ಸೇವ್ ಆಗಿದೆ. ದಯವಿಟ್ಟು ಕೆಲವು ಸೆಕೆಂಡು ಕಾಯಿರಿ.",
+    "purchase_return_saved": "ಖರೀದಿ ವಾಪಸಿ ಸೇವ್ ಆಗಿದೆ",
+    "purchase_return_exists": "ಈ ಖರೀದಿ ವಾಪಸಿ ಈಗಾಗಲೇ ಇದೆ.",
+})
+
+TR["ml"].update({
+    "return_quantity_required": "മടക്കാനുള്ള അളവ് നൽകുക.",
+    "return_recently_saved": "ഈ മടക്കം ഇപ്പോൾ തന്നെ സേവ് ചെയ്തു. ദയവായി കുറച്ച് സെക്കൻഡ് കാത്തിരിക്കുക.",
+    "purchase_return_saved": "വാങ്ങൽ മടക്കം സേവ് ചെയ്തു",
+    "purchase_return_exists": "ഈ വാങ്ങൽ മടക്കം ഇതിനകം നിലവിലുണ്ട്.",
+})
+
+TR["pa"].update({
+    "return_quantity_required": "ਵਾਪਸੀ ਦੀ ਮਾਤਰਾ ਦਰਜ ਕਰੋ।",
+    "return_recently_saved": "ਇਹ ਵਾਪਸੀ ਹੁਣੇ ਹੀ ਸੇਵ ਹੋਈ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕੁਝ ਸਕਿੰਟ ਉਡੀਕ ਕਰੋ।",
+    "purchase_return_saved": "ਖਰੀਦ ਵਾਪਸੀ ਸੇਵ ਹੋਈ",
+    "purchase_return_exists": "ਇਹ ਖਰੀਦ ਵਾਪਸੀ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।",
+})
+# ============================================================
+# V5.5 - COMPLETE UI LANGUAGE FIXES
+# ============================================================
+
+TR["en"].update({
+    "save_changes": "Save Changes",
+    "sales_return_credit": "Sales Return Credit",
+    "invoice_paid_total_error": "Invoice cannot be updated because the new total is lower than the amount already paid.",
+    "invoice_updated": "Invoice updated successfully.",
+    "invoice_has_sales_return": "This invoice has a Sales Return. Delete the related Sales Return first before deleting this invoice.",
+    "invoice_deleted": "Invoice deleted successfully.",
+    "invoice_delete_failed": "Invoice could not be deleted",
+    "sales_return_saved": "Sales Return saved",
+    "sales_return_exists": "This Sales Return already exists.",
+    "no_visible_changes": "No visible field changes were found.",
+    "no_previous_record": "No previous record information available.",
+    "export_excel_csv": "Excel / CSV Export",
+    "export_data_from": "Export data from",
+    "export_to": "to",
+    "download_excel": "Download Excel",
+    "download_csv_files": "Download CSV Files",
+    "excel_export_failed": "Excel export could not start",
+    "backup_keep_safe": "Keep this backup file safe. It contains your business records.",
+    "restore_backup": "Restore Backup",
+    "restore_help": "Upload a SHIVPRUBA BILLING backup file. Restore will replace the current business data of this account.",
+    "upload_backup_file": "Upload Backup File (.json)",
+    "invalid_backup_missing": "Invalid backup file. Missing",
+    "backup_valid": "Backup file is valid.",
+    "backup_read_failed": "Could not read backup file",
+    "restore_confirm_replace": "I understand that current business data will be replaced.",
+    "restore_type_confirm": "Type RESTORE to confirm",
+    "restore_my_backup": "Restore My Backup",
+    "backup_restored": "Backup restored successfully. Business data has been recovered.",
+    "restore_integrity_failed": "Restore stopped because duplicate or invalid database data was found",
+    "restore_failed": "Restore failed. No partial restore was saved. Error",
+})
+
+TR["mr"].update({
+    "save_changes": "बदल सेव्ह करा", "sales_return_credit": "विक्री परतावा क्रेडिट",
+    "invoice_paid_total_error": "नवीन बिलाची एकूण रक्कम आधीच मिळालेल्या पेमेंटपेक्षा कमी असल्यामुळे बिल अपडेट करता येणार नाही.",
+    "invoice_updated": "बिल यशस्वीपणे अपडेट झाले.", "invoice_has_sales_return": "या बिलावर विक्री परतावा आहे. हे बिल डिलीट करण्यापूर्वी संबंधित विक्री परतावा डिलीट करा.",
+    "invoice_deleted": "बिल यशस्वीपणे डिलीट झाले.", "invoice_delete_failed": "बिल डिलीट करता आले नाही",
+    "sales_return_saved": "विक्री परतावा सेव्ह झाला", "sales_return_exists": "हा विक्री परतावा आधीपासून अस्तित्वात आहे.",
+    "no_visible_changes": "दिसणाऱ्या माहितीमध्ये कोणताही बदल आढळला नाही.", "no_previous_record": "मागील नोंदीची माहिती उपलब्ध नाही.",
+    "export_excel_csv": "Excel / CSV निर्यात", "export_data_from": "या दिनांकापासून डेटा निर्यात", "export_to": "ते",
+    "download_excel": "Excel डाउनलोड करा", "download_csv_files": "CSV फाइल्स डाउनलोड करा", "excel_export_failed": "Excel निर्यात सुरू करता आली नाही",
+    "backup_keep_safe": "ही बॅकअप फाइल सुरक्षित ठेवा. यात तुमच्या व्यवसायाच्या नोंदी आहेत.", "restore_backup": "बॅकअप पुनर्संचयित करा",
+    "restore_help": "SHIVPRUBA BILLING ची बॅकअप फाइल अपलोड करा. पुनर्संचयित केल्यावर या खात्याचा सध्याचा व्यवसाय डेटा बदलला जाईल.",
+    "upload_backup_file": "बॅकअप फाइल अपलोड करा (.json)", "invalid_backup_missing": "अवैध बॅकअप फाइल. हे विभाग उपलब्ध नाहीत",
+    "backup_valid": "बॅकअप फाइल वैध आहे.", "backup_read_failed": "बॅकअप फाइल वाचता आली नाही",
+    "restore_confirm_replace": "सध्याचा व्यवसाय डेटा बदलला जाईल हे मला समजले आहे.", "restore_type_confirm": "पुष्टीसाठी RESTORE टाइप करा",
+    "restore_my_backup": "माझा बॅकअप पुनर्संचयित करा", "backup_restored": "बॅकअप यशस्वीपणे पुनर्संचयित झाला. व्यवसाय डेटा परत मिळाला आहे.",
+    "restore_integrity_failed": "डुप्लिकेट किंवा अवैध डेटाबेस डेटा आढळल्यामुळे पुनर्संचयित करणे थांबवले", "restore_failed": "पुनर्संचयित करणे अयशस्वी. अपूर्ण डेटा सेव्ह केलेला नाही. त्रुटी",
+})
+
+TR["hi"].update({
+    "save_changes": "बदलाव सेव करें", "sales_return_credit": "बिक्री वापसी क्रेडिट", "invoice_paid_total_error": "नई बिल राशि पहले से प्राप्त भुगतान से कम है, इसलिए बिल अपडेट नहीं किया जा सकता।",
+    "invoice_updated": "बिल सफलतापूर्वक अपडेट हुआ।", "invoice_has_sales_return": "इस बिल पर बिक्री वापसी है। बिल हटाने से पहले संबंधित बिक्री वापसी हटाएं।", "invoice_deleted": "बिल सफलतापूर्वक हटाया गया।", "invoice_delete_failed": "बिल हटाया नहीं जा सका",
+    "sales_return_saved": "बिक्री वापसी सेव हुई", "sales_return_exists": "यह बिक्री वापसी पहले से मौजूद है।", "no_visible_changes": "दिखाई देने वाली जानकारी में कोई बदलाव नहीं मिला।", "no_previous_record": "पिछले रिकॉर्ड की जानकारी उपलब्ध नहीं है।",
+    "export_excel_csv": "Excel / CSV निर्यात", "export_data_from": "इस तारीख से डेटा निर्यात", "export_to": "तक", "download_excel": "Excel डाउनलोड करें", "download_csv_files": "CSV फाइलें डाउनलोड करें", "excel_export_failed": "Excel निर्यात शुरू नहीं हो सका",
+    "backup_keep_safe": "इस बैकअप फाइल को सुरक्षित रखें। इसमें आपके व्यवसाय के रिकॉर्ड हैं।", "restore_backup": "बैकअप पुनर्स्थापित करें", "restore_help": "SHIVPRUBA BILLING बैकअप फाइल अपलोड करें। पुनर्स्थापना इस खाते के वर्तमान व्यवसाय डेटा को बदल देगी।", "upload_backup_file": "बैकअप फाइल अपलोड करें (.json)",
+    "invalid_backup_missing": "अमान्य बैकअप फाइल। ये भाग नहीं मिले", "backup_valid": "बैकअप फाइल मान्य है।", "backup_read_failed": "बैकअप फाइल पढ़ी नहीं जा सकी", "restore_confirm_replace": "मैं समझता हूँ कि वर्तमान व्यवसाय डेटा बदल दिया जाएगा।", "restore_type_confirm": "पुष्टि के लिए RESTORE टाइप करें", "restore_my_backup": "मेरा बैकअप पुनर्स्थापित करें", "backup_restored": "बैकअप सफलतापूर्वक पुनर्स्थापित हुआ। व्यवसाय डेटा वापस मिल गया है।", "restore_integrity_failed": "डुप्लिकेट या अमान्य डेटाबेस डेटा मिलने के कारण पुनर्स्थापना रोक दी गई", "restore_failed": "पुनर्स्थापना विफल रही। अधूरा डेटा सेव नहीं किया गया। त्रुटि",
+})
+
+TR["gu"].update({
+    "save_changes":"ફેરફારો સેવ કરો","sales_return_credit":"વેચાણ પરત ક્રેડિટ","invoice_paid_total_error":"નવી બિલ રકમ પહેલેથી મળેલા ચુકવણી કરતાં ઓછી હોવાથી બિલ અપડેટ કરી શકાતું નથી.","invoice_updated":"બિલ સફળતાપૂર્વક અપડેટ થયું.","invoice_has_sales_return":"આ બિલમાં વેચાણ પરત છે. બિલ કાઢતા પહેલાં સંબંધિત વેચાણ પરત કાઢો.","invoice_deleted":"બિલ સફળતાપૂર્વક કાઢી નાખ્યું.","invoice_delete_failed":"બિલ કાઢી શકાયું નથી","sales_return_saved":"વેચાણ પરત સેવ થયું","sales_return_exists":"આ વેચાણ પરત પહેલેથી હાજર છે.","no_visible_changes":"દેખાતી માહિતીમાં કોઈ ફેરફાર મળ્યો નથી.","no_previous_record":"પહેલાના રેકોર્ડની માહિતી ઉપલબ્ધ નથી.","export_excel_csv":"Excel / CSV નિકાસ","export_data_from":"આ તારીખથી ડેટા નિકાસ","export_to":"થી","download_excel":"Excel ડાઉનલોડ કરો","download_csv_files":"CSV ફાઇલો ડાઉનલોડ કરો","excel_export_failed":"Excel નિકાસ શરૂ થઈ શકી નથી","backup_keep_safe":"આ બેકઅપ ફાઇલ સુરક્ષિત રાખો. તેમાં તમારા વ્યવસાયના રેકોર્ડ છે.","restore_backup":"બેકઅપ પુનઃસ્થાપિત કરો","restore_help":"SHIVPRUBA BILLING બેકઅપ ફાઇલ અપલોડ કરો. પુનઃસ્થાપન આ ખાતાનો હાલનો વ્યવસાય ડેટા બદલી દેશે.","upload_backup_file":"બેકઅપ ફાઇલ અપલોડ કરો (.json)","invalid_backup_missing":"અમાન્ય બેકઅપ ફાઇલ. આ વિભાગો નથી","backup_valid":"બેકઅપ ફાઇલ માન્ય છે.","backup_read_failed":"બેકઅપ ફાઇલ વાંચી શકાઈ નથી","restore_confirm_replace":"હું સમજું છું કે હાલનો વ્યવસાય ડેટા બદલાઈ જશે.","restore_type_confirm":"પુષ્ટિ માટે RESTORE લખો","restore_my_backup":"મારો બેકઅપ પુનઃસ્થાપિત કરો","backup_restored":"બેકઅપ સફળતાપૂર્વક પુનઃસ્થાપિત થયો. વ્યવસાય ડેટા પાછો મળ્યો છે.","restore_integrity_failed":"ડુપ્લિકેટ અથવા અમાન્ય ડેટાબેસ ડેટાને કારણે પુનઃસ્થાપન અટક્યું","restore_failed":"પુનઃસ્થાપન નિષ્ફળ ગયું. અધૂરો ડેટા સેવ થયો નથી. ભૂલ",
+})
+
+TR["bn"].update({
+    "save_changes":"পরিবর্তন সেভ করুন","sales_return_credit":"বিক্রয় ফেরত ক্রেডিট","invoice_paid_total_error":"নতুন বিলের মোট পরিমাণ ইতিমধ্যে প্রাপ্ত পেমেন্টের চেয়ে কম হওয়ায় বিল আপডেট করা যাবে না।","invoice_updated":"বিল সফলভাবে আপডেট হয়েছে।","invoice_has_sales_return":"এই বিলে বিক্রয় ফেরত আছে। বিল মুছার আগে সংশ্লিষ্ট বিক্রয় ফেরত মুছুন।","invoice_deleted":"বিল সফলভাবে মুছে ফেলা হয়েছে।","invoice_delete_failed":"বিল মুছে ফেলা যায়নি","sales_return_saved":"বিক্রয় ফেরত সেভ হয়েছে","sales_return_exists":"এই বিক্রয় ফেরত আগে থেকেই আছে।","no_visible_changes":"দৃশ্যমান তথ্যে কোনো পরিবর্তন পাওয়া যায়নি।","no_previous_record":"পূর্ববর্তী রেকর্ডের তথ্য পাওয়া যায়নি।","export_excel_csv":"Excel / CSV রপ্তানি","export_data_from":"এই তারিখ থেকে ডেটা রপ্তানি","export_to":"থেকে","download_excel":"Excel ডাউনলোড করুন","download_csv_files":"CSV ফাইল ডাউনলোড করুন","excel_export_failed":"Excel রপ্তানি শুরু করা যায়নি","backup_keep_safe":"এই ব্যাকআপ ফাইলটি নিরাপদে রাখুন। এতে আপনার ব্যবসার রেকর্ড রয়েছে।","restore_backup":"ব্যাকআপ পুনরুদ্ধার করুন","restore_help":"SHIVPRUBA BILLING ব্যাকআপ ফাইল আপলোড করুন। পুনরুদ্ধার করলে এই অ্যাকাউন্টের বর্তমান ব্যবসার ডেটা প্রতিস্থাপিত হবে।","upload_backup_file":"ব্যাকআপ ফাইল আপলোড করুন (.json)","invalid_backup_missing":"অবৈধ ব্যাকআপ ফাইল। এই অংশগুলো নেই","backup_valid":"ব্যাকআপ ফাইল বৈধ।","backup_read_failed":"ব্যাকআপ ফাইল পড়া যায়নি","restore_confirm_replace":"আমি বুঝেছি যে বর্তমান ব্যবসার ডেটা প্রতিস্থাপিত হবে।","restore_type_confirm":"নিশ্চিত করতে RESTORE লিখুন","restore_my_backup":"আমার ব্যাকআপ পুনরুদ্ধার করুন","backup_restored":"ব্যাকআপ সফলভাবে পুনরুদ্ধার হয়েছে। ব্যবসার ডেটা ফিরে এসেছে।","restore_integrity_failed":"ডুপ্লিকেট বা অবৈধ ডেটাবেস ডেটার কারণে পুনরুদ্ধার বন্ধ হয়েছে","restore_failed":"পুনরুদ্ধার ব্যর্থ হয়েছে। আংশিক ডেটা সেভ হয়নি। ত্রুটি",
+})
+
+TR["ta"].update({
+    "save_changes":"மாற்றங்களை சேமிக்கவும்","sales_return_credit":"விற்பனைத் திருப்பம் கிரெடிட்","invoice_paid_total_error":"புதிய பில் மொத்தம் ஏற்கனவே பெறப்பட்ட கட்டணத்தை விட குறைவாக இருப்பதால் பில்லை புதுப்பிக்க முடியாது.","invoice_updated":"பில் வெற்றிகரமாக புதுப்பிக்கப்பட்டது.","invoice_has_sales_return":"இந்த பில்லில் விற்பனைத் திருப்பம் உள்ளது. பில்லை நீக்கும் முன் தொடர்புடைய திருப்பத்தை நீக்கவும்.","invoice_deleted":"பில் வெற்றிகரமாக நீக்கப்பட்டது.","invoice_delete_failed":"பில்லை நீக்க முடியவில்லை","sales_return_saved":"விற்பனைத் திருப்பம் சேமிக்கப்பட்டது","sales_return_exists":"இந்த விற்பனைத் திருப்பம் ஏற்கனவே உள்ளது.","no_visible_changes":"காணக்கூடிய தகவலில் மாற்றம் இல்லை.","no_previous_record":"முந்தைய பதிவு தகவல் கிடைக்கவில்லை.","export_excel_csv":"Excel / CSV ஏற்றுமதி","export_data_from":"இந்த தேதியிலிருந்து தரவை ஏற்றுமதி","export_to":"வரை","download_excel":"Excel பதிவிறக்கவும்","download_csv_files":"CSV கோப்புகளை பதிவிறக்கவும்","excel_export_failed":"Excel ஏற்றுமதி தொடங்க முடியவில்லை","backup_keep_safe":"இந்த காப்பு கோப்பை பாதுகாப்பாக வைத்திருங்கள். இதில் உங்கள் வணிக பதிவுகள் உள்ளன.","restore_backup":"காப்பை மீட்டமைக்கவும்","restore_help":"SHIVPRUBA BILLING காப்பு கோப்பை பதிவேற்றவும். மீட்டமைத்தால் தற்போதைய வணிக தரவு மாற்றப்படும்.","upload_backup_file":"காப்பு கோப்பை பதிவேற்றவும் (.json)","invalid_backup_missing":"தவறான காப்பு கோப்பு. இவை இல்லை","backup_valid":"காப்பு கோப்பு செல்லுபடியாகும்.","backup_read_failed":"காப்பு கோப்பை படிக்க முடியவில்லை","restore_confirm_replace":"தற்போதைய வணிக தரவு மாற்றப்படும் என்பதை புரிந்துகொண்டேன்.","restore_type_confirm":"உறுதிப்படுத்த RESTORE என தட்டச்சு செய்யவும்","restore_my_backup":"என் காப்பை மீட்டமைக்கவும்","backup_restored":"காப்பு வெற்றிகரமாக மீட்டமைக்கப்பட்டது. வணிக தரவு மீட்கப்பட்டது.","restore_integrity_failed":"நகல் அல்லது தவறான தரவுத்தள தரவு காரணமாக மீட்டமைப்பு நிறுத்தப்பட்டது","restore_failed":"மீட்டமைப்பு தோல்வியடைந்தது. பகுதி தரவு சேமிக்கப்படவில்லை. பிழை",
+})
+
+TR["te"].update({
+    "save_changes":"మార్పులను సేవ్ చేయండి","sales_return_credit":"అమ్మకాల వాపసు క్రెడిట్","invoice_paid_total_error":"కొత్త బిల్లు మొత్తం ఇప్పటికే అందుకున్న చెల్లింపుకంటే తక్కువగా ఉన్నందున బిల్లును అప్‌డేట్ చేయలేము.","invoice_updated":"బిల్లు విజయవంతంగా అప్‌డేట్ అయింది.","invoice_has_sales_return":"ఈ బిల్లుకు అమ్మకాల వాపసు ఉంది. బిల్లును తొలగించే ముందు సంబంధిత వాపసును తొలగించండి.","invoice_deleted":"బిల్లు విజయవంతంగా తొలగించబడింది.","invoice_delete_failed":"బిల్లును తొలగించలేకపోయాం","sales_return_saved":"అమ్మకాల వాపసు సేవ్ అయింది","sales_return_exists":"ఈ అమ్మకాల వాపసు ఇప్పటికే ఉంది.","no_visible_changes":"కనిపించే సమాచారంలో మార్పులు లేవు.","no_previous_record":"మునుపటి రికార్డు సమాచారం అందుబాటులో లేదు.","export_excel_csv":"Excel / CSV ఎగుమతి","export_data_from":"ఈ తేదీ నుండి డేటా ఎగుమతి","export_to":"వరకు","download_excel":"Excel డౌన్‌లోడ్ చేయండి","download_csv_files":"CSV ఫైళ్లను డౌన్‌లోడ్ చేయండి","excel_export_failed":"Excel ఎగుమతి ప్రారంభించలేకపోయాం","backup_keep_safe":"ఈ బ్యాకప్ ఫైల్‌ను సురక్షితంగా ఉంచండి. ఇందులో మీ వ్యాపార రికార్డులు ఉన్నాయి.","restore_backup":"బ్యాకప్ పునరుద్ధరించండి","restore_help":"SHIVPRUBA BILLING బ్యాకప్ ఫైల్‌ను అప్‌లోడ్ చేయండి. పునరుద్ధరణ ప్రస్తుత వ్యాపార డేటాను భర్తీ చేస్తుంది.","upload_backup_file":"బ్యాకప్ ఫైల్ అప్‌లోడ్ చేయండి (.json)","invalid_backup_missing":"చెల్లని బ్యాకప్ ఫైల్. ఇవి లేవు","backup_valid":"బ్యాకప్ ఫైల్ చెల్లుబాటు అవుతుంది.","backup_read_failed":"బ్యాకప్ ఫైల్ చదవలేకపోయాం","restore_confirm_replace":"ప్రస్తుత వ్యాపార డేటా భర్తీ అవుతుందని నాకు అర్థమైంది.","restore_type_confirm":"నిర్ధారించడానికి RESTORE టైప్ చేయండి","restore_my_backup":"నా బ్యాకప్ పునరుద్ధరించండి","backup_restored":"బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది. వ్యాపార డేటా తిరిగి పొందబడింది.","restore_integrity_failed":"డూప్లికేట్ లేదా చెల్లని డేటాబేస్ డేటా కారణంగా పునరుద్ధరణ ఆగింది","restore_failed":"పునరుద్ధరణ విఫలమైంది. పాక్షిక డేటా సేవ్ కాలేదు. లోపం",
+})
+
+TR["kn"].update({
+    "save_changes":"ಬದಲಾವಣೆಗಳನ್ನು ಸೇವ್ ಮಾಡಿ","sales_return_credit":"ಮಾರಾಟ ವಾಪಸಿ ಕ್ರೆಡಿಟ್","invoice_paid_total_error":"ಹೊಸ ಬಿಲ್ ಮೊತ್ತ ಈಗಾಗಲೇ ಪಡೆದ ಪಾವತಿಗಿಂತ ಕಡಿಮೆ ಇರುವುದರಿಂದ ಬಿಲ್ ಅಪ್‌ಡೇಟ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.","invoice_updated":"ಬಿಲ್ ಯಶಸ್ವಿಯಾಗಿ ಅಪ್‌ಡೇಟ್ ಆಯಿತು.","invoice_has_sales_return":"ಈ ಬಿಲ್‌ಗೆ ಮಾರಾಟ ವಾಪಸಿ ಇದೆ. ಬಿಲ್ ಅಳಿಸುವ ಮೊದಲು ಸಂಬಂಧಿತ ವಾಪಸಿಯನ್ನು ಅಳಿಸಿ.","invoice_deleted":"ಬಿಲ್ ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ.","invoice_delete_failed":"ಬಿಲ್ ಅಳಿಸಲಾಗಲಿಲ್ಲ","sales_return_saved":"ಮಾರಾಟ ವಾಪಸಿ ಸೇವ್ ಆಯಿತು","sales_return_exists":"ಈ ಮಾರಾಟ ವಾಪಸಿ ಈಗಾಗಲೇ ಇದೆ.","no_visible_changes":"ಕಾಣುವ ಮಾಹಿತಿಯಲ್ಲಿ ಯಾವುದೇ ಬದಲಾವಣೆ ಕಂಡುಬಂದಿಲ್ಲ.","no_previous_record":"ಹಿಂದಿನ ದಾಖಲೆಯ ಮಾಹಿತಿ ಲಭ್ಯವಿಲ್ಲ.","export_excel_csv":"Excel / CSV ರಫ್ತು","export_data_from":"ಈ ದಿನಾಂಕದಿಂದ ಡೇಟಾ ರಫ್ತು","export_to":"ವರೆಗೆ","download_excel":"Excel ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ","download_csv_files":"CSV ಫೈಲ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ","excel_export_failed":"Excel ರಫ್ತು ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ","backup_keep_safe":"ಈ ಬ್ಯಾಕಪ್ ಫೈಲ್ ಅನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಇಡಿ. ಇದರಲ್ಲಿ ನಿಮ್ಮ ವ್ಯವಹಾರ ದಾಖಲೆಗಳಿವೆ.","restore_backup":"ಬ್ಯಾಕಪ್ ಮರುಸ್ಥಾಪಿಸಿ","restore_help":"SHIVPRUBA BILLING ಬ್ಯಾಕಪ್ ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ. ಮರುಸ್ಥಾಪನೆ ಪ್ರಸ್ತುತ ವ್ಯವಹಾರ ಡೇಟಾವನ್ನು ಬದಲಿಸುತ್ತದೆ.","upload_backup_file":"ಬ್ಯಾಕಪ್ ಫೈಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ (.json)","invalid_backup_missing":"ಅಮಾನ್ಯ ಬ್ಯಾಕಪ್ ಫೈಲ್. ಇವು ಕಾಣೆಯಾಗಿದೆ","backup_valid":"ಬ್ಯಾಕಪ್ ಫೈಲ್ ಮಾನ್ಯವಾಗಿದೆ.","backup_read_failed":"ಬ್ಯಾಕಪ್ ಫೈಲ್ ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ","restore_confirm_replace":"ಪ್ರಸ್ತುತ ವ್ಯವಹಾರ ಡೇಟಾ ಬದಲಾಗುತ್ತದೆ ಎಂದು ನನಗೆ ಅರ್ಥವಾಗಿದೆ.","restore_type_confirm":"ದೃಢೀಕರಿಸಲು RESTORE ಟೈಪ್ ಮಾಡಿ","restore_my_backup":"ನನ್ನ ಬ್ಯಾಕಪ್ ಮರುಸ್ಥಾಪಿಸಿ","backup_restored":"ಬ್ಯಾಕಪ್ ಯಶಸ್ವಿಯಾಗಿ ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ. ವ್ಯವಹಾರ ಡೇಟಾ ಮರಳಿ ಬಂದಿದೆ.","restore_integrity_failed":"ನಕಲಿ ಅಥವಾ ಅಮಾನ್ಯ ಡೇಟಾಬೇಸ್ ಡೇಟಾದ ಕಾರಣ ಮರುಸ್ಥಾಪನೆ ನಿಂತಿದೆ","restore_failed":"ಮರುಸ್ಥಾಪನೆ ವಿಫಲವಾಗಿದೆ. ಭಾಗಶಃ ಡೇಟಾ ಸೇವ್ ಆಗಿಲ್ಲ. ದೋಷ",
+})
+
+TR["ml"].update({
+    "save_changes":"മാറ്റങ്ങൾ സേവ് ചെയ്യുക","sales_return_credit":"വിൽപ്പന മടക്കം ക്രെഡിറ്റ്","invoice_paid_total_error":"പുതിയ ബിൽ തുക ഇതിനകം ലഭിച്ച പേയ്മെന്റിനേക്കാൾ കുറവായതിനാൽ ബിൽ അപ്ഡേറ്റ് ചെയ്യാനാകില്ല.","invoice_updated":"ബിൽ വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു.","invoice_has_sales_return":"ഈ ബില്ലിന് വിൽപ്പന മടക്കം ഉണ്ട്. ബിൽ ഡിലീറ്റ് ചെയ്യുന്നതിന് മുമ്പ് ബന്ധപ്പെട്ട മടക്കം ഡിലീറ്റ് ചെയ്യുക.","invoice_deleted":"ബിൽ വിജയകരമായി ഡിലീറ്റ് ചെയ്തു.","invoice_delete_failed":"ബിൽ ഡിലീറ്റ് ചെയ്യാനായില്ല","sales_return_saved":"വിൽപ്പന മടക്കം സേവ് ചെയ്തു","sales_return_exists":"ഈ വിൽപ്പന മടക്കം ഇതിനകം നിലവിലുണ്ട്.","no_visible_changes":"കാണുന്ന വിവരങ്ങളിൽ മാറ്റമൊന്നും കണ്ടെത്തിയില്ല.","no_previous_record":"മുൻ രേഖയുടെ വിവരം ലഭ്യമല്ല.","export_excel_csv":"Excel / CSV കയറ്റുമതി","export_data_from":"ഈ തീയതി മുതൽ ഡാറ്റ കയറ്റുമതി","export_to":"വരെ","download_excel":"Excel ഡൗൺലോഡ് ചെയ്യുക","download_csv_files":"CSV ഫയലുകൾ ഡൗൺലോഡ് ചെയ്യുക","excel_export_failed":"Excel കയറ്റുമതി ആരംഭിക്കാനായില്ല","backup_keep_safe":"ഈ ബാക്കപ്പ് ഫയൽ സുരക്ഷിതമായി സൂക്ഷിക്കുക. ഇതിൽ നിങ്ങളുടെ ബിസിനസ് രേഖകളുണ്ട്.","restore_backup":"ബാക്കപ്പ് പുനഃസ്ഥാപിക്കുക","restore_help":"SHIVPRUBA BILLING ബാക്കപ്പ് ഫയൽ അപ്‌ലോഡ് ചെയ്യുക. പുനഃസ്ഥാപനം നിലവിലെ ബിസിനസ് ഡാറ്റ മാറ്റിസ്ഥാപിക്കും.","upload_backup_file":"ബാക്കപ്പ് ഫയൽ അപ്‌ലോഡ് ചെയ്യുക (.json)","invalid_backup_missing":"അസാധുവായ ബാക്കപ്പ് ഫയൽ. ഇവ ലഭ്യമല്ല","backup_valid":"ബാക്കപ്പ് ഫയൽ സാധുവാണ്.","backup_read_failed":"ബാക്കപ്പ് ഫയൽ വായിക്കാനായില്ല","restore_confirm_replace":"നിലവിലെ ബിസിനസ് ഡാറ്റ മാറ്റിസ്ഥാപിക്കുമെന്ന് ഞാൻ മനസ്സിലാക്കുന്നു.","restore_type_confirm":"സ്ഥിരീകരിക്കാൻ RESTORE ടൈപ്പ് ചെയ്യുക","restore_my_backup":"എന്റെ ബാക്കപ്പ് പുനഃസ്ഥാപിക്കുക","backup_restored":"ബാക്കപ്പ് വിജയകരമായി പുനഃസ്ഥാപിച്ചു. ബിസിനസ് ഡാറ്റ വീണ്ടെടുത്തു.","restore_integrity_failed":"ഡ്യൂപ്ലിക്കേറ്റ് അല്ലെങ്കിൽ അസാധുവായ ഡാറ്റാബേസ് ഡാറ്റ കാരണം പുനഃസ്ഥാപനം നിർത്തി","restore_failed":"പുനഃസ്ഥാപനം പരാജയപ്പെട്ടു. ഭാഗിക ഡാറ്റ സേവ് ചെയ്തിട്ടില്ല. പിശക്",
+})
+
+TR["pa"].update({
+    "save_changes":"ਤਬਦੀਲੀਆਂ ਸੇਵ ਕਰੋ","sales_return_credit":"ਵਿਕਰੀ ਵਾਪਸੀ ਕਰੈਡਿਟ","invoice_paid_total_error":"ਨਵੀਂ ਬਿੱਲ ਰਕਮ ਪਹਿਲਾਂ ਮਿਲੀ ਭੁਗਤਾਨ ਰਕਮ ਤੋਂ ਘੱਟ ਹੋਣ ਕਰਕੇ ਬਿੱਲ ਅਪਡੇਟ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।","invoice_updated":"ਬਿੱਲ ਸਫਲਤਾਪੂਰਵਕ ਅਪਡੇਟ ਹੋਇਆ।","invoice_has_sales_return":"ਇਸ ਬਿੱਲ ਨਾਲ ਵਿਕਰੀ ਵਾਪਸੀ ਹੈ। ਬਿੱਲ ਮਿਟਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਸੰਬੰਧਿਤ ਵਾਪਸੀ ਮਿਟਾਓ।","invoice_deleted":"ਬਿੱਲ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਇਆ ਗਿਆ।","invoice_delete_failed":"ਬਿੱਲ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ","sales_return_saved":"ਵਿਕਰੀ ਵਾਪਸੀ ਸੇਵ ਹੋਈ","sales_return_exists":"ਇਹ ਵਿਕਰੀ ਵਾਪਸੀ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।","no_visible_changes":"ਦਿੱਖ ਰਹੀ ਜਾਣਕਾਰੀ ਵਿੱਚ ਕੋਈ ਤਬਦੀਲੀ ਨਹੀਂ ਮਿਲੀ।","no_previous_record":"ਪਿਛਲੇ ਰਿਕਾਰਡ ਦੀ ਜਾਣਕਾਰੀ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।","export_excel_csv":"Excel / CSV ਨਿਰਯਾਤ","export_data_from":"ਇਸ ਮਿਤੀ ਤੋਂ ਡਾਟਾ ਨਿਰਯਾਤ","export_to":"ਤੱਕ","download_excel":"Excel ਡਾਊਨਲੋਡ ਕਰੋ","download_csv_files":"CSV ਫਾਈਲਾਂ ਡਾਊਨਲੋਡ ਕਰੋ","excel_export_failed":"Excel ਨਿਰਯਾਤ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ","backup_keep_safe":"ਇਸ ਬੈਕਅਪ ਫਾਈਲ ਨੂੰ ਸੁਰੱਖਿਅਤ ਰੱਖੋ। ਇਸ ਵਿੱਚ ਤੁਹਾਡੇ ਕਾਰੋਬਾਰ ਦੇ ਰਿਕਾਰਡ ਹਨ।","restore_backup":"ਬੈਕਅਪ ਮੁੜ-ਬਹਾਲ ਕਰੋ","restore_help":"SHIVPRUBA BILLING ਬੈਕਅਪ ਫਾਈਲ ਅਪਲੋਡ ਕਰੋ। ਮੁੜ-ਬਹਾਲੀ ਮੌਜੂਦਾ ਕਾਰੋਬਾਰੀ ਡਾਟਾ ਬਦਲ ਦੇਵੇਗੀ।","upload_backup_file":"ਬੈਕਅਪ ਫਾਈਲ ਅਪਲੋਡ ਕਰੋ (.json)","invalid_backup_missing":"ਗਲਤ ਬੈਕਅਪ ਫਾਈਲ। ਇਹ ਭਾਗ ਨਹੀਂ ਮਿਲੇ","backup_valid":"ਬੈਕਅਪ ਫਾਈਲ ਠੀਕ ਹੈ।","backup_read_failed":"ਬੈਕਅਪ ਫਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ","restore_confirm_replace":"ਮੈਂ ਸਮਝਦਾ ਹਾਂ ਕਿ ਮੌਜੂਦਾ ਕਾਰੋਬਾਰੀ ਡਾਟਾ ਬਦਲਿਆ ਜਾਵੇਗਾ।","restore_type_confirm":"ਪੁਸ਼ਟੀ ਲਈ RESTORE ਟਾਈਪ ਕਰੋ","restore_my_backup":"ਮੇਰਾ ਬੈਕਅਪ ਮੁੜ-ਬਹਾਲ ਕਰੋ","backup_restored":"ਬੈਕਅਪ ਸਫਲਤਾਪੂਰਵਕ ਮੁੜ-ਬਹਾਲ ਹੋਇਆ। ਕਾਰੋਬਾਰੀ ਡਾਟਾ ਵਾਪਸ ਮਿਲ ਗਿਆ ਹੈ।","restore_integrity_failed":"ਡੁਪਲੀਕੇਟ ਜਾਂ ਗਲਤ ਡਾਟਾਬੇਸ ਡਾਟਾ ਕਾਰਨ ਮੁੜ-ਬਹਾਲੀ ਰੋਕੀ ਗਈ","restore_failed":"ਮੁੜ-ਬਹਾਲੀ ਅਸਫਲ ਰਹੀ। ਅਧੂਰਾ ਡਾਟਾ ਸੇਵ ਨਹੀਂ ਹੋਇਆ। ਗਲਤੀ",
+})
+
+# ============================================================
+# V5.3 - OUTSTANDING / PAYMENT REMINDER LANGUAGE LABELS
+# ============================================================
+
+TR["en"].update({
+    "payment_reminder": "Outstanding / Payment Reminder",
+    "customers_with_outstanding": "Customers with Outstanding",
+    "pending_invoices": "Pending Invoices",
+    "outstanding_amount": "Outstanding Amount",
+    "reminder_message": "Payment Reminder Message",
+    "no_outstanding": "No outstanding payments found.",
+    "download_reminder": "Download Reminder",
+})
+
+TR["mr"].update({
+    "payment_reminder": "बाकी रक्कम / पेमेंट रिमाइंडर",
+    "customers_with_outstanding": "बाकी असलेले ग्राहक",
+    "pending_invoices": "बाकी बिले",
+    "outstanding_amount": "बाकी रक्कम",
+    "reminder_message": "पेमेंट रिमाइंडर संदेश",
+    "no_outstanding": "कोणतीही बाकी रक्कम नाही.",
+    "download_reminder": "रिमाइंडर डाउनलोड करा",
+})
+
+TR["hi"].update({
+    "payment_reminder": "बकाया / भुगतान रिमाइंडर",
+    "customers_with_outstanding": "बकाया वाले ग्राहक",
+    "pending_invoices": "बकाया बिल",
+    "outstanding_amount": "बकाया राशि",
+    "reminder_message": "भुगतान रिमाइंडर संदेश",
+    "no_outstanding": "कोई बकाया भुगतान नहीं है।",
+    "download_reminder": "रिमाइंडर डाउनलोड करें",
+})
+
+TR["gu"].update({
+    "payment_reminder": "બાકી રકમ / ચુકવણી રિમાઇન્ડર",
+    "customers_with_outstanding": "બાકી ધરાવતા ગ્રાહકો",
+    "pending_invoices": "બાકી બિલ",
+    "outstanding_amount": "બાકી રકમ",
+    "reminder_message": "ચુકવણી રિમાઇન્ડર સંદેશ",
+    "no_outstanding": "કોઈ બાકી ચુકવણી નથી.",
+    "download_reminder": "રિમાઇન્ડર ડાઉનલોડ કરો",
+})
+
+TR["bn"].update({
+    "payment_reminder": "বকেয়া / পেমেন্ট রিমাইন্ডার",
+    "customers_with_outstanding": "বকেয়া থাকা গ্রাহক",
+    "pending_invoices": "বকেয়া বিল",
+    "outstanding_amount": "বকেয়া পরিমাণ",
+    "reminder_message": "পেমেন্ট রিমাইন্ডার বার্তা",
+    "no_outstanding": "কোনো বকেয়া পেমেন্ট নেই।",
+    "download_reminder": "রিমাইন্ডার ডাউনলোড করুন",
+})
+
+TR["ta"].update({
+    "payment_reminder": "நிலுவை / கட்டண நினைவூட்டல்",
+    "customers_with_outstanding": "நிலுவை உள்ள வாடிக்கையாளர்கள்",
+    "pending_invoices": "நிலுவை பில்கள்",
+    "outstanding_amount": "நிலுவை தொகை",
+    "reminder_message": "கட்டண நினைவூட்டல் செய்தி",
+    "no_outstanding": "நிலுவை கட்டணம் எதுவும் இல்லை.",
+    "download_reminder": "நினைவூட்டலை பதிவிறக்கு",
+})
+
+TR["te"].update({
+    "payment_reminder": "బాకీ / చెల్లింపు రిమైండర్",
+    "customers_with_outstanding": "బాకీ ఉన్న కస్టమర్లు",
+    "pending_invoices": "బాకీ బిల్లులు",
+    "outstanding_amount": "బాకీ మొత్తం",
+    "reminder_message": "చెల్లింపు రిమైండర్ సందేశం",
+    "no_outstanding": "బాకీ చెల్లింపులు లేవు.",
+    "download_reminder": "రిమైండర్ డౌన్‌లోడ్",
+})
+
+TR["kn"].update({
+    "payment_reminder": "ಬಾಕಿ / ಪಾವತಿ ರಿಮೈಂಡರ್",
+    "customers_with_outstanding": "ಬಾಕಿ ಇರುವ ಗ್ರಾಹಕರು",
+    "pending_invoices": "ಬಾಕಿ ಬಿಲ್ಲುಗಳು",
+    "outstanding_amount": "ಬಾಕಿ ಮೊತ್ತ",
+    "reminder_message": "ಪಾವತಿ ರಿಮೈಂಡರ್ ಸಂದೇಶ",
+    "no_outstanding": "ಯಾವುದೇ ಬಾಕಿ ಪಾವತಿಗಳಿಲ್ಲ.",
+    "download_reminder": "ರಿಮೈಂಡರ್ ಡೌನ್‌ಲೋಡ್",
+})
+
+TR["ml"].update({
+    "payment_reminder": "കുടിശ്ശിക / പേയ്മെന്റ് റിമൈൻഡർ",
+    "customers_with_outstanding": "കുടിശ്ശികയുള്ള ഉപഭോക്താക്കൾ",
+    "pending_invoices": "കുടിശ്ശിക ബില്ലുകൾ",
+    "outstanding_amount": "കുടിശ്ശിക തുക",
+    "reminder_message": "പേയ്മെന്റ് റിമൈൻഡർ സന്ദേശം",
+    "no_outstanding": "കുടിശ്ശിക പേയ്മെന്റുകളില്ല.",
+    "download_reminder": "റിമൈൻഡർ ഡൗൺലോഡ്",
+})
+
+TR["pa"].update({
+    "payment_reminder": "ਬਕਾਇਆ / ਭੁਗਤਾਨ ਰਿਮਾਈਂਡਰ",
+    "customers_with_outstanding": "ਬਕਾਇਆ ਵਾਲੇ ਗਾਹਕ",
+    "pending_invoices": "ਬਕਾਇਆ ਬਿੱਲ",
+    "outstanding_amount": "ਬਕਾਇਆ ਰਕਮ",
+    "reminder_message": "ਭੁਗਤਾਨ ਰਿਮਾਈਂਡਰ ਸੁਨੇਹਾ",
+    "no_outstanding": "ਕੋਈ ਬਕਾਇਆ ਭੁਗਤਾਨ ਨਹੀਂ ਹੈ।",
+    "download_reminder": "ਰਿਮਾਈਂਡਰ ਡਾਊਨਲੋਡ ਕਰੋ",
+})
+
+# ============================================================
+# V5.2 - QUOTATION / ESTIMATE - ALL 10 LANGUAGES
+# ============================================================
+
+TR["en"].update({
+    "quotation": "Quotation / Estimate",
+    "create_quotation": "Create Quotation / Estimate",
+    "quotation_details": "Quotation Details",
+    "quotation_number": "Quotation Number",
+    "quotation_date": "Quotation Date",
+    "valid_until": "Valid Until",
+    "save_quotation": "Save Quotation",
+    "quotation_saved": "Quotation saved successfully.",
+    "quotation_duplicate": "This quotation number already exists.",
+    "saved_quotations": "Saved Quotations",
+    "no_quotations": "No quotations yet.",
+    "quotation_stock_note": "Saving a quotation does not change stock.",
+    "search_quotation": "Search quotation number or customer name",
+    "quotation_validity_error": "Valid Until date cannot be before the Quotation Date.",
+})
+
+TR["mr"].update({
+    "quotation": "कोटेशन / अंदाजपत्रक",
+    "create_quotation": "कोटेशन / अंदाजपत्रक तयार करा",
+    "quotation_details": "कोटेशन तपशील",
+    "quotation_number": "कोटेशन क्रमांक",
+    "quotation_date": "कोटेशन दिनांक",
+    "valid_until": "वैधता दिनांक",
+    "save_quotation": "कोटेशन सेव्ह करा",
+    "quotation_saved": "कोटेशन यशस्वीपणे सेव्ह झाले.",
+    "quotation_duplicate": "हा कोटेशन क्रमांक आधीपासून आहे.",
+    "saved_quotations": "सेव्ह केलेली कोटेशन्स",
+    "no_quotations": "अजून कोटेशन नाही.",
+    "quotation_stock_note": "कोटेशन सेव्ह केल्याने स्टॉकमध्ये कोणताही बदल होत नाही.",
+    "search_quotation": "कोटेशन क्रमांक किंवा ग्राहक शोधा",
+    "quotation_validity_error": "वैधता दिनांक हा कोटेशन दिनांकाच्या आधी असू शकत नाही.",
+})
+
+TR["hi"].update({
+    "quotation": "कोटेशन / अनुमान",
+    "create_quotation": "कोटेशन / अनुमान बनाएं",
+    "quotation_details": "कोटेशन विवरण",
+    "quotation_number": "कोटेशन नंबर",
+    "quotation_date": "कोटेशन तारीख",
+    "valid_until": "मान्य तिथि",
+    "save_quotation": "कोटेशन सेव करें",
+    "quotation_saved": "कोटेशन सफलतापूर्वक सेव हुआ।",
+    "quotation_duplicate": "यह कोटेशन नंबर पहले से मौजूद है।",
+    "saved_quotations": "सेव किए गए कोटेशन",
+    "no_quotations": "अभी कोई कोटेशन नहीं है।",
+    "quotation_stock_note": "कोटेशन सेव करने से स्टॉक में कोई बदलाव नहीं होगा।",
+    "search_quotation": "कोटेशन नंबर या ग्राहक खोजें",
+    "quotation_validity_error": "मान्य तिथि कोटेशन तारीख से पहले नहीं हो सकती।",
+})
+
+TR["gu"].update({
+    "quotation": "ક્વોટેશન / અંદાજ",
+    "create_quotation": "ક્વોટેશન / અંદાજ બનાવો",
+    "quotation_details": "ક્વોટેશન વિગતો",
+    "quotation_number": "ક્વોટેશન નંબર",
+    "quotation_date": "ક્વોટેશન તારીખ",
+    "valid_until": "માન્ય તારીખ",
+    "save_quotation": "ક્વોટેશન સેવ કરો",
+    "quotation_saved": "ક્વોટેશન સફળતાપૂર્વક સેવ થયું.",
+    "quotation_duplicate": "આ ક્વોટેશન નંબર પહેલેથી હાજર છે.",
+    "saved_quotations": "સેવ કરેલા ક્વોટેશન",
+    "no_quotations": "હજુ કોઈ ક્વોટેશન નથી.",
+    "quotation_stock_note": "ક્વોટેશન સેવ કરવાથી સ્ટોકમાં કોઈ ફેરફાર થતો નથી.",
+    "search_quotation": "ક્વોટેશન નંબર અથવા ગ્રાહક શોધો",
+    "quotation_validity_error": "માન્ય તારીખ ક્વોટેશન તારીખ પહેલાં હોઈ શકે નહીં.",
+})
+
+TR["bn"].update({
+    "quotation": "কোটেশন / প্রাক্কলন",
+    "create_quotation": "কোটেশন / প্রাক্কলন তৈরি করুন",
+    "quotation_details": "কোটেশন বিবরণ",
+    "quotation_number": "কোটেশন নম্বর",
+    "quotation_date": "কোটেশন তারিখ",
+    "valid_until": "বৈধতার তারিখ",
+    "save_quotation": "কোটেশন সেভ করুন",
+    "quotation_saved": "কোটেশন সফলভাবে সেভ হয়েছে।",
+    "quotation_duplicate": "এই কোটেশন নম্বরটি আগে থেকেই আছে।",
+    "saved_quotations": "সেভ করা কোটেশন",
+    "no_quotations": "এখনও কোনো কোটেশন নেই।",
+    "quotation_stock_note": "কোটেশন সেভ করলে স্টকে কোনো পরিবর্তন হয় না।",
+    "search_quotation": "কোটেশন নম্বর বা গ্রাহক খুঁজুন",
+    "quotation_validity_error": "বৈধতার তারিখ কোটেশন তারিখের আগে হতে পারে না।",
+})
+
+TR["ta"].update({
+    "quotation": "விலை முன்மொழிவு / மதிப்பீடு",
+    "create_quotation": "விலை முன்மொழிவு / மதிப்பீடு உருவாக்கு",
+    "quotation_details": "விலை முன்மொழிவு விவரங்கள்",
+    "quotation_number": "விலை முன்மொழிவு எண்",
+    "quotation_date": "விலை முன்மொழிவு தேதி",
+    "valid_until": "செல்லுபடியாகும் தேதி",
+    "save_quotation": "விலை முன்மொழிவை சேமிக்கவும்",
+    "quotation_saved": "விலை முன்மொழிவு வெற்றிகரமாக சேமிக்கப்பட்டது.",
+    "quotation_duplicate": "இந்த விலை முன்மொழிவு எண் ஏற்கனவே உள்ளது.",
+    "saved_quotations": "சேமித்த விலை முன்மொழிவுகள்",
+    "no_quotations": "இன்னும் விலை முன்மொழிவுகள் இல்லை.",
+    "quotation_stock_note": "விலை முன்மொழிவை சேமிப்பதால் ஸ்டாக் மாறாது.",
+    "search_quotation": "விலை முன்மொழிவு எண் அல்லது வாடிக்கையாளரை தேடவும்",
+    "quotation_validity_error": "செல்லுபடியாகும் தேதி விலை முன்மொழிவு தேதிக்கு முன் இருக்க முடியாது.",
+})
+
+TR["te"].update({
+    "quotation": "కొటేషన్ / అంచనా",
+    "create_quotation": "కొటేషన్ / అంచనా రూపొందించండి",
+    "quotation_details": "కొటేషన్ వివరాలు",
+    "quotation_number": "కొటేషన్ నంబర్",
+    "quotation_date": "కొటేషన్ తేదీ",
+    "valid_until": "చెల్లుబాటు తేదీ",
+    "save_quotation": "కొటేషన్ సేవ్ చేయండి",
+    "quotation_saved": "కొటేషన్ విజయవంతంగా సేవ్ అయింది.",
+    "quotation_duplicate": "ఈ కొటేషన్ నంబర్ ఇప్పటికే ఉంది.",
+    "saved_quotations": "సేవ్ చేసిన కొటేషన్లు",
+    "no_quotations": "ఇంకా కొటేషన్లు లేవు.",
+    "quotation_stock_note": "కొటేషన్ సేవ్ చేయడం వల్ల స్టాక్ మారదు.",
+    "search_quotation": "కొటేషన్ నంబర్ లేదా కస్టమర్‌ను వెతకండి",
+    "quotation_validity_error": "చెల్లుబాటు తేదీ కొటేషన్ తేదీకి ముందు ఉండకూడదు.",
+})
+
+TR["kn"].update({
+    "quotation": "ಕೊಟೇಶನ್ / ಅಂದಾಜು",
+    "create_quotation": "ಕೊಟೇಶನ್ / ಅಂದಾಜು ರಚಿಸಿ",
+    "quotation_details": "ಕೊಟೇಶನ್ ವಿವರಗಳು",
+    "quotation_number": "ಕೊಟೇಶನ್ ಸಂಖ್ಯೆ",
+    "quotation_date": "ಕೊಟೇಶನ್ ದಿನಾಂಕ",
+    "valid_until": "ಮಾನ್ಯ ದಿನಾಂಕ",
+    "save_quotation": "ಕೊಟೇಶನ್ ಸೇವ್ ಮಾಡಿ",
+    "quotation_saved": "ಕೊಟೇಶನ್ ಯಶಸ್ವಿಯಾಗಿ ಸೇವ್ ಆಗಿದೆ.",
+    "quotation_duplicate": "ಈ ಕೊಟೇಶನ್ ಸಂಖ್ಯೆ ಈಗಾಗಲೇ ಇದೆ.",
+    "saved_quotations": "ಸೇವ್ ಮಾಡಿದ ಕೊಟೇಶನ್‌ಗಳು",
+    "no_quotations": "ಇನ್ನೂ ಕೊಟೇಶನ್‌ಗಳಿಲ್ಲ.",
+    "quotation_stock_note": "ಕೊಟೇಶನ್ ಸೇವ್ ಮಾಡುವುದರಿಂದ ಸ್ಟಾಕ್ ಬದಲಾಗುವುದಿಲ್ಲ.",
+    "search_quotation": "ಕೊಟೇಶನ್ ಸಂಖ್ಯೆ ಅಥವಾ ಗ್ರಾಹಕರನ್ನು ಹುಡುಕಿ",
+    "quotation_validity_error": "ಮಾನ್ಯ ದಿನಾಂಕ ಕೊಟೇಶನ್ ದಿನಾಂಕಕ್ಕಿಂತ ಮೊದಲು ಇರಬಾರದು.",
+})
+
+TR["ml"].update({
+    "quotation": "ക്വട്ടേഷൻ / എസ്റ്റിമേറ്റ്",
+    "create_quotation": "ക്വട്ടേഷൻ / എസ്റ്റിമേറ്റ് തയ്യാറാക്കുക",
+    "quotation_details": "ക്വട്ടേഷൻ വിശദാംശങ്ങൾ",
+    "quotation_number": "ക്വട്ടേഷൻ നമ്പർ",
+    "quotation_date": "ക്വട്ടേഷൻ തീയതി",
+    "valid_until": "സാധുത തീയതി",
+    "save_quotation": "ക്വട്ടേഷൻ സേവ് ചെയ്യുക",
+    "quotation_saved": "ക്വട്ടേഷൻ വിജയകരമായി സേവ് ചെയ്തു.",
+    "quotation_duplicate": "ഈ ക്വട്ടേഷൻ നമ്പർ ഇതിനകം നിലവിലുണ്ട്.",
+    "saved_quotations": "സേവ് ചെയ്ത ക്വട്ടേഷനുകൾ",
+    "no_quotations": "ഇതുവരെ ക്വട്ടേഷനുകളില്ല.",
+    "quotation_stock_note": "ക്വട്ടേഷൻ സേവ് ചെയ്യുന്നത് സ്റ്റോക്കിൽ മാറ്റമുണ്ടാക്കില്ല.",
+    "search_quotation": "ക്വട്ടേഷൻ നമ്പർ അല്ലെങ്കിൽ ഉപഭോക്താവിനെ തിരയുക",
+    "quotation_validity_error": "സാധുത തീയതി ക്വട്ടേഷൻ തീയതിക്ക് മുമ്പാകരുത്.",
+})
+
+TR["pa"].update({
+    "quotation": "ਕੋਟੇਸ਼ਨ / ਅੰਦਾਜ਼ਾ",
+    "create_quotation": "ਕੋਟੇਸ਼ਨ / ਅੰਦਾਜ਼ਾ ਬਣਾਓ",
+    "quotation_details": "ਕੋਟੇਸ਼ਨ ਵੇਰਵੇ",
+    "quotation_number": "ਕੋਟੇਸ਼ਨ ਨੰਬਰ",
+    "quotation_date": "ਕੋਟੇਸ਼ਨ ਮਿਤੀ",
+    "valid_until": "ਮਿਆਦ ਦੀ ਮਿਤੀ",
+    "save_quotation": "ਕੋਟੇਸ਼ਨ ਸੇਵ ਕਰੋ",
+    "quotation_saved": "ਕੋਟੇਸ਼ਨ ਸਫਲਤਾਪੂਰਵਕ ਸੇਵ ਹੋਇਆ।",
+    "quotation_duplicate": "ਇਹ ਕੋਟੇਸ਼ਨ ਨੰਬਰ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।",
+    "saved_quotations": "ਸੇਵ ਕੀਤੇ ਕੋਟੇਸ਼ਨ",
+    "no_quotations": "ਹਾਲੇ ਕੋਈ ਕੋਟੇਸ਼ਨ ਨਹੀਂ ਹੈ।",
+    "quotation_stock_note": "ਕੋਟੇਸ਼ਨ ਸੇਵ ਕਰਨ ਨਾਲ ਸਟਾਕ ਵਿੱਚ ਕੋਈ ਬਦਲਾਅ ਨਹੀਂ ਹੁੰਦਾ।",
+    "search_quotation": "ਕੋਟੇਸ਼ਨ ਨੰਬਰ ਜਾਂ ਗਾਹਕ ਖੋਜੋ",
+    "quotation_validity_error": "ਮਿਆਦ ਦੀ ਮਿਤੀ ਕੋਟੇਸ਼ਨ ਮਿਤੀ ਤੋਂ ਪਹਿਲਾਂ ਨਹੀਂ ਹੋ ਸਕਦੀ।",
+})
 
 # ============================================================
 # GLOBAL DESIGN - INDIC FONT + MATRA/VOWEL-MARK FIX + MOBILE
@@ -972,6 +1825,127 @@ purchases_table = Table(
     Column("created_at", DateTime, nullable=False, default=now_naive),
     UniqueConstraint("user_id", "bill_number", name="uq_purchase_user_bill"),
 )
+# ============================================================
+# V5.2 - QUOTATIONS / ESTIMATES
+# ============================================================
+
+quotations_table = Table(
+    "quotations", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+    Column("quotation_number", String(120), nullable=False),
+    Column("quotation_date", String(20), nullable=False),
+    Column("valid_until", String(20), nullable=False),
+    Column("customer_name", String(300), nullable=False),
+    Column("customer_address", Text, default=""),
+    Column("customer_gstin", String(40), default=""),
+    Column("customer_state", String(120), default=""),
+    Column("place_of_supply", String(120), default=""),
+    Column("items_json", Text, nullable=False),
+    Column("taxable_value", Float, nullable=False, default=0.0),
+    Column("cgst", Float, nullable=False, default=0.0),
+    Column("sgst", Float, nullable=False, default=0.0),
+    Column("igst", Float, nullable=False, default=0.0),
+    Column("grand_total", Float, nullable=False, default=0.0),
+    Column("is_intra_state", Boolean, nullable=False, default=True),
+    Column("created_at", DateTime, nullable=False, default=now_naive),
+    UniqueConstraint("user_id", "quotation_number", name="uq_quotation_user_number"),
+)
+
+# ============================================================
+# V5.1 - SALES RETURN / PURCHASE RETURN
+# ============================================================
+
+sales_returns_table = Table(
+    "sales_returns", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+
+    Column("original_invoice_id", Integer, ForeignKey("invoices.id"), nullable=False),
+    Column("original_invoice_number", String(120), nullable=False),
+
+    Column("return_number", String(120), nullable=False),
+    Column("return_date", String(20), nullable=False),
+
+    Column("customer_name", String(300), nullable=False),
+    Column("reason", Text, default=""),
+
+    Column("items_json", Text, nullable=False),
+
+    Column("taxable_value", Float, nullable=False, default=0.0),
+    Column("cgst", Float, nullable=False, default=0.0),
+    Column("sgst", Float, nullable=False, default=0.0),
+    Column("igst", Float, nullable=False, default=0.0),
+    Column("grand_total", Float, nullable=False, default=0.0),
+
+    Column("created_at", DateTime, nullable=False, default=now_naive),
+
+    UniqueConstraint(
+        "user_id",
+        "return_number",
+        name="uq_sales_return_user_number"
+    ),
+)
+
+
+purchase_returns_table = Table(
+    "purchase_returns", metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+
+    Column("original_purchase_id", Integer, ForeignKey("purchases.id"), nullable=False),
+    Column("original_bill_number", String(120), nullable=False),
+
+    Column("return_number", String(120), nullable=False),
+    Column("return_date", String(20), nullable=False),
+
+    Column("supplier_name", String(300), nullable=False),
+    Column("reason", Text, default=""),
+
+    Column("items_json", Text, nullable=False),
+
+    Column("taxable_value", Float, nullable=False, default=0.0),
+    Column("cgst", Float, nullable=False, default=0.0),
+    Column("sgst", Float, nullable=False, default=0.0),
+    Column("igst", Float, nullable=False, default=0.0),
+    Column("grand_total", Float, nullable=False, default=0.0),
+
+    Column("created_at", DateTime, nullable=False, default=now_naive),
+
+    UniqueConstraint(
+        "user_id",
+        "return_number",
+        name="uq_purchase_return_user_number"
+    ),
+)
+expenses_table = Table(
+    "expenses",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+    Column("expense_date", String(20), nullable=False),
+    Column("category", String(100), nullable=False),
+    Column("amount", Float, nullable=False, default=0.0),
+    Column("note", Text, default=""),
+    Column("created_at", DateTime, nullable=False, default=now_naive),
+)
+# ============================================================
+# V5.3 - EDIT / DELETE CHANGE HISTORY
+# ============================================================
+
+change_history_table = Table(
+    "change_history",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("user_id", Integer, ForeignKey("users.id"), nullable=False, index=True),
+    Column("record_type", String(50), nullable=False),
+    Column("record_id", Integer, nullable=False, default=0),
+    Column("record_number", String(150), default=""),
+    Column("action", String(30), nullable=False),
+    Column("old_data_json", Text, default=""),
+    Column("new_data_json", Text, default=""),
+    Column("created_at", DateTime, nullable=False, default=now_naive),
+)
 
 stock_ledger_table = Table(
     "stock_ledger", metadata,
@@ -1108,6 +2082,100 @@ def get_purchases(user_id):
             d["items"] = []
         out.append(d)
     return out
+def get_quotations(user_id):
+    rows = fetch_all(quotations_table, user_id, quotations_table.c.id)
+    out = []
+    for d in rows:
+        try:
+            d["items"] = json.loads(d.get("items_json") or "[]")
+        except Exception:
+            d["items"] = []
+        out.append(d)
+    return out
+
+
+def get_sales_returns(user_id):
+    rows = fetch_all(sales_returns_table, user_id, sales_returns_table.c.id)
+    out = []
+    for d in rows:
+        try:
+            d["items"] = json.loads(d.get("items_json") or "[]")
+        except Exception:
+            d["items"] = []
+        out.append(d)
+    return out
+
+
+def get_purchase_returns(user_id):
+    rows = fetch_all(purchase_returns_table, user_id, purchase_returns_table.c.id)
+    out = []
+    for d in rows:
+        try:
+            d["items"] = json.loads(d.get("items_json") or "[]")
+        except Exception:
+            d["items"] = []
+        out.append(d)
+    return out
+def get_change_history(user_id):
+    rows = fetch_all(
+        change_history_table,
+        user_id,
+        change_history_table.c.id,
+        desc=True,
+    )
+
+    out = []
+
+    for row in rows:
+        try:
+            row["old_data"] = json.loads(
+                row.get("old_data_json") or "{}"
+            )
+        except Exception:
+            row["old_data"] = {}
+
+        try:
+            row["new_data"] = json.loads(
+                row.get("new_data_json") or "{}"
+            )
+        except Exception:
+            row["new_data"] = {}
+
+        out.append(row)
+
+    return out
+
+
+def log_change(
+    con,
+    user_id,
+    record_type,
+    record_id,
+    record_number,
+    action,
+    old_data=None,
+    new_data=None,
+):
+    con.execute(
+        insert(change_history_table).values(
+            user_id=user_id,
+            record_type=str(record_type or ""),
+            record_id=int(record_id or 0),
+            record_number=str(record_number or ""),
+            action=str(action or ""),
+            old_data_json=json.dumps(
+                old_data or {},
+                ensure_ascii=False,
+                default=str,
+            ),
+            new_data_json=json.dumps(
+                new_data or {},
+                ensure_ascii=False,
+                default=str,
+            ),
+            created_at=now_naive(),
+        )
+    )
 
 
 def ensure_user_settings(user_id):
@@ -1393,71 +2461,836 @@ def pdf_text(pdf, x, y, text, size=9, bold=False):
     pdf.drawString(x, y, pdf_safe(text, font_name))
 
 
+
+def make_whatsapp_invoice_url(inv, business):
+    company_name = str(
+        business.get("company_name") or APP_NAME
+    ).strip()
+
+    invoice_number = str(
+        inv.get("invoice_number", "")
+    ).strip()
+
+    customer_name = str(
+        inv.get("customer_name", "")
+    ).strip()
+
+    invoice_date = str(
+        inv.get("invoice_date", "")
+    ).strip()
+
+    grand_total = float(
+        inv.get("grand_total", 0) or 0
+    )
+
+    message = (
+        f"{company_name}\n\n"
+        f"Invoice: {invoice_number}\n"
+        f"Date: {invoice_date}\n"
+        f"Customer: {customer_name}\n"
+        f"Amount: ₹{grand_total:,.2f}\n\n"
+        f"Thank you!"
+    )
+
+    return "https://wa.me/?text=" + quote(message)
+
+
 def make_invoice_pdf(inv, business):
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
+
     pdf.setTitle(f"{APP_NAME} - {inv['invoice_number']}")
-    pdf_text(pdf, 18 * mm, height - 18 * mm, t("create_tax_invoice"), 15, True)
-    pdf_text(pdf, 18 * mm, height - 29 * mm, business.get("company_name", ""), 13, True)
-    pdf_text(pdf, 18 * mm, height - 36 * mm, business.get("company_address", ""), 9)
-    pdf_text(pdf, 18 * mm, height - 43 * mm, f"GSTIN: {business.get('company_gstin','')}", 9)
-    pdf_text(pdf, 18 * mm, height - 50 * mm, f"{t('phone')}: {business.get('company_phone','')}", 9)
-    pdf_text(pdf, 115 * mm, height - 29 * mm, f"{t('invoice_number')}: {inv['invoice_number']}", 9, True)
-    pdf_text(pdf, 115 * mm, height - 37 * mm, f"{t('date')}: {inv['invoice_date']}", 9)
-    pdf_text(pdf, 115 * mm, height - 45 * mm, f"{t('place_of_supply')}: {inv.get('place_of_supply','')}", 8)
+
+    # ===== INVOICE TITLE =====
+    pdf_text(
+        pdf,
+        18 * mm,
+        height - 18 * mm,
+        t("create_tax_invoice"),
+        15,
+        True
+    )
+
+    # ===== LEFT SIDE : COMPANY DETAILS =====
+    left_x = 18 * mm
+    company_y = height - 30 * mm
+
+    pdf_text(
+        pdf,
+        left_x,
+        company_y,
+        business.get("company_name", ""),
+        12,
+        True
+    )
+
+    company_y -= 7 * mm
+
+    company_address = business.get("company_address", "")
+    address_words = company_address.split()
+    address_lines = []
+    current_line = ""
+
+    for word in address_words:
+        test_line = current_line + (" " if current_line else "") + word
+
+        if pdfmetrics.stringWidth(
+            test_line,
+            "Helvetica",
+            9
+        ) <= 88 * mm:
+            current_line = test_line
+        else:
+            if current_line:
+                address_lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        address_lines.append(current_line)
+
+    for line in address_lines:
+        pdf_text(
+            pdf,
+            left_x,
+            company_y,
+            line,
+            9
+        )
+        company_y -= 5 * mm
+
+    company_y -= 7 * mm
+
+    pdf_text(
+        pdf,
+        left_x,
+        company_y,
+        f"GSTIN: {business.get('company_gstin', '')}",
+        9
+    )
+
+    company_y -= 7 * mm
+
+    pdf_text(
+        pdf,
+        left_x,
+        company_y,
+        f"{t('phone')}: {business.get('company_phone', '')}",
+        9
+    )
+
+    # ===== RIGHT SIDE : INVOICE DETAILS =====
+    right_x = 115 * mm
+    invoice_y = height - 30 * mm
+
+    pdf_text(
+        pdf,
+        right_x,
+        invoice_y,
+        f"{t('invoice_number')}: {inv.get('invoice_number', '')}",
+        9,
+        True
+    )
+
+    invoice_y -= 8 * mm
+
+    pdf_text(
+        pdf,
+        right_x,
+        invoice_y,
+        f"{t('date')}: {inv.get('invoice_date', '')}",
+        9
+    )
+
+    invoice_y -= 8 * mm
+
+    pdf_text(
+        pdf,
+        right_x,
+        invoice_y,
+        f"{t('place_of_supply')}: {inv.get('place_of_supply', '')}",
+        9
+    )
+
+    # ===== SEPARATOR LINE =====
     y = height - 70 * mm
     pdf.line(18 * mm, y, 192 * mm, y)
+
     y -= 8 * mm
-    pdf_text(pdf, 18 * mm, y, t("customer_info"), 10, True)
+
+    pdf_text(
+        pdf,
+        18 * mm,
+        y,
+        t("customer_info"),
+        10,
+        True
+    )
+
     y -= 7 * mm
-    pdf_text(pdf, 18 * mm, y, inv.get("customer_name", ""), 10, True)
+
+    pdf_text(
+        pdf,
+        18 * mm,
+        y,
+        inv.get("customer_name", ""),
+        10,
+        True
+    )
+
     y -= 6 * mm
-    pdf_text(pdf, 18 * mm, y, inv.get("customer_address", ""), 9)
+
+    pdf_text(
+        pdf,
+        18 * mm,
+        y,
+        inv.get("customer_address", ""),
+        9
+    )
+
     y -= 6 * mm
-    pdf_text(pdf, 18 * mm, y, f"GSTIN: {inv.get('customer_gstin','')}", 9)
+
+    pdf_text(
+        pdf,
+        18 * mm,
+        y,
+        f"GSTIN: {inv.get('customer_gstin', '') or '--'}",
+        9
+    )
+
     y -= 10 * mm
     pdf.line(18 * mm, y, 192 * mm, y)
+
     y -= 7 * mm
-    headers = ["#", t("description"), t("hsn_sac"), t("quantity"), t("rate"), "GST%", t("amount")]
+
+    headers = [
+        "#",
+        t("description"),
+        t("hsn_sac"),
+        t("quantity"),
+        t("rate"),
+        "GST%",
+        t("amount")
+    ]
+
     xs = [18, 28, 92, 116, 132, 157, 174]
+
     for x, header in zip(xs, headers):
-        pdf_text(pdf, x * mm, y, header, 8, True)
+        pdf_text(
+            pdf,
+            x * mm,
+            y,
+            header,
+            8,
+            True
+        )
+
     y -= 6 * mm
     pdf.line(18 * mm, y, 192 * mm, y)
+
     y -= 6 * mm
+
     for index, item in enumerate(inv.get("items", []), 1):
         if y < 45 * mm:
             pdf.showPage()
             y = height - 25 * mm
-        pdf_text(pdf, 18 * mm, y, index, 8)
-        pdf_text(pdf, 28 * mm, y, str(item.get("desc", ""))[:28], 8)
-        pdf_text(pdf, 92 * mm, y, item.get("hsn", ""), 8)
-        pdf_text(pdf, 116 * mm, y, f"{float(item.get('qty',0)):g}", 8)
-        pdf_text(pdf, 132 * mm, y, f"{float(item.get('rate',0)):,.2f}", 8)
-        pdf_text(pdf, 157 * mm, y, f"{float(item.get('gst_rate',0)):g}", 8)
-        pdf_text(pdf, 174 * mm, y, f"{float(item.get('amount',0)):,.2f}", 8)
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            index,
+            8
+        )
+
+        pdf_text(
+            pdf,
+            28 * mm,
+            y,
+            str(item.get("desc", ""))[:28],
+            8
+        )
+
+        pdf_text(
+            pdf,
+            92 * mm,
+            y,
+            item.get("hsn", ""),
+            8
+        )
+
+        pdf_text(
+            pdf,
+            116 * mm,
+            y,
+            f"{float(item.get('qty', 0)):g}",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            132 * mm,
+            y,
+            f"{float(item.get('rate', 0)):,.2f}",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            157 * mm,
+            y,
+            f"{float(item.get('gst_rate', 0)):g}",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            174 * mm,
+            y,
+            f"{float(item.get('amount', 0)):,.2f}",
+            8
+        )
+
         y -= 7 * mm
+
     y -= 3 * mm
     pdf.line(112 * mm, y, 192 * mm, y)
+
     y -= 7 * mm
-    pdf_text(pdf, 120 * mm, y, t("taxable_value"), 8)
-    pdf_text(pdf, 170 * mm, y, f"{float(inv.get('taxable_value',0)):,.2f}", 8)
+
+    pdf_text(
+        pdf,
+        120 * mm,
+        y,
+        t("taxable_value"),
+        8
+    )
+
+    pdf_text(
+        pdf,
+        170 * mm,
+        y,
+        f"{float(inv.get('taxable_value', 0)):,.2f}",
+        8
+    )
+
     y -= 6 * mm
+
     if inv.get("is_intra_state"):
-        pdf_text(pdf, 120 * mm, y, "CGST", 8); pdf_text(pdf, 170 * mm, y, f"{float(inv.get('cgst',0)):,.2f}", 8)
+        pdf_text(
+            pdf,
+            120 * mm,
+            y,
+            "CGST",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            170 * mm,
+            y,
+            f"{float(inv.get('cgst', 0)):,.2f}",
+            8
+        )
+
         y -= 6 * mm
-        pdf_text(pdf, 120 * mm, y, "SGST", 8); pdf_text(pdf, 170 * mm, y, f"{float(inv.get('sgst',0)):,.2f}", 8)
+
+        pdf_text(
+            pdf,
+            120 * mm,
+            y,
+            "SGST",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            170 * mm,
+            y,
+            f"{float(inv.get('sgst', 0)):,.2f}",
+            8
+        )
+
     else:
-        pdf_text(pdf, 120 * mm, y, "IGST", 8); pdf_text(pdf, 170 * mm, y, f"{float(inv.get('igst',0)):,.2f}", 8)
+        pdf_text(
+            pdf,
+            120 * mm,
+            y,
+            "IGST",
+            8
+        )
+
+        pdf_text(
+            pdf,
+            170 * mm,
+            y,
+            f"{float(inv.get('igst', 0)):,.2f}",
+            8
+        )
+
     y -= 8 * mm
     pdf.line(112 * mm, y, 192 * mm, y)
+
     y -= 8 * mm
-    pdf_text(pdf, 120 * mm, y, t("grand_total"), 10, True)
-    pdf_text(pdf, 166 * mm, y, f"Rs. {float(inv.get('grand_total',0)):,.2f}", 10, True)
+
+    pdf_text(
+        pdf,
+        120 * mm,
+        y,
+        t("grand_total"),
+        10,
+        True
+    )
+
+    pdf_text(
+        pdf,
+        166 * mm,
+        y,
+        f"Rs. {float(inv.get('grand_total', 0)):,.2f}",
+        10,
+        True
+    )
+
     pdf.save()
     buffer.seek(0)
+
     return buffer.getvalue()
+
+def make_quotation_pdf(quote, business):
+        buffer = io.BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        
+        pdf.setTitle(f"{APP_NAME} - {quote['quotation_number']}")
+        
+        # ========================================================
+        # SMALL HELPER - WRAP LONG COMPANY ADDRESS
+        # ========================================================
+        def draw_wrapped_address(pdf_obj, x, y, text, max_width, font_size=9, line_gap=5 * mm):
+            font_name = register_pdf_font(selected_lang)
+            safe_text = pdf_safe(text, font_name)
+            pdf_obj.setFont(font_name, font_size)
+
+            words = safe_text.split()
+            lines = []
+            current_line = ""
+
+            for word in words:
+                test_line = word if not current_line else f"{current_line} {word}"
+                if pdfmetrics.stringWidth(test_line, font_name, font_size) <= max_width:
+                    current_line = test_line
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                    current_line = word
+
+            if current_line:
+                lines.append(current_line)
+
+            # Maximum 2 lines for company address
+            lines = lines[:2]
+
+            current_y = y
+            for line in lines:
+                pdf_obj.drawString(x, current_y, line)
+                current_y -= line_gap
+
+            return current_y
+        # ========================================================
+        # HEADER
+        # ========================================================
+        pdf_text(
+            pdf,
+            18 * mm,
+            height - 18 * mm,
+            t("quotation"),
+            15,
+            True
+        )
+
+        # ========================================================
+        # LEFT SIDE - COMPANY DETAILS
+        # ========================================================
+        pdf_text(
+            pdf,
+            18 * mm,
+            height - 29 * mm,
+            business.get("company_name", ""),
+            13,
+            True
+        )
+
+        # Company address gets only left-side space.
+        # This prevents overlap with quotation details.
+        address_end_y = draw_wrapped_address(
+            pdf,
+            18 * mm,
+            height - 36 * mm,
+            business.get("company_address", ""),
+            max_width=88 * mm,
+            font_size=9,
+            line_gap=5 * mm,
+        )
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            address_end_y - 2 * mm,
+            f"GSTIN: {business.get('company_gstin', '')}",
+            9
+        )
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            address_end_y - 9 * mm,
+            f"{t('phone')}: {business.get('company_phone', '')}",
+            9
+        )
+
+        # ========================================================
+        # RIGHT SIDE - QUOTATION DETAILS
+        # ========================================================
+        pdf_text(
+            pdf,
+            112 * mm,
+            height - 29 * mm,
+            f"{t('quotation_number')}: {quote['quotation_number']}",
+            9,
+            True
+        )
+
+        pdf_text(
+            pdf,
+            112 * mm,
+            height - 37 * mm,
+            f"{t('quotation_date')}: {quote['quotation_date']}",
+            9
+        )
+
+        pdf_text(
+            pdf,
+            112 * mm,
+            height - 45 * mm,
+            f"{t('valid_until')}: {quote.get('valid_until', '')}",
+            9
+        )
+
+        pdf_text(
+            pdf,
+            112 * mm,
+            height - 53 * mm,
+            f"{t('place_of_supply')}: {quote.get('place_of_supply', '')}",
+            8
+        )
+
+        # ========================================================
+        # CUSTOMER INFORMATION
+        # ========================================================
+        y = height - 72 * mm
+
+        pdf.line(
+            18 * mm,
+            y,
+            192 * mm,
+            y
+        )
+
+        y -= 8 * mm
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            t("customer_info"),
+            10,
+            True
+        )
+
+        y -= 7 * mm
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            quote.get("customer_name", ""),
+            10,
+            True
+        )
+
+        y -= 6 * mm
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            quote.get("customer_address", ""),
+            9
+        )
+
+        y -= 6 * mm
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            f"GSTIN: {quote.get('customer_gstin', '')}",
+            9
+        )
+
+        # ========================================================
+        # ITEM TABLE
+        # ========================================================
+        y -= 10 * mm
+
+        pdf.line(
+            18 * mm,
+            y,
+            192 * mm,
+            y
+        )
+
+        y -= 7 * mm
+
+        headers = [
+            "#",
+            t("description"),
+            t("hsn_sac"),
+            t("quantity"),
+            t("rate"),
+            "GST%",
+            t("amount"),
+        ]
+
+        xs = [
+            18,
+            28,
+            92,
+            116,
+            132,
+            157,
+            174,
+        ]
+
+        for x, header in zip(xs, headers):
+            pdf_text(
+                pdf,
+                x * mm,
+                y,
+                header,
+                8,
+                True
+            )
+
+        y -= 6 * mm
+
+        pdf.line(
+            18 * mm,
+            y,
+            192 * mm,
+            y
+        )
+
+        y -= 6 * mm
+
+        for index, item in enumerate(
+            quote.get("items", []),
+            1
+        ):
+            if y < 45 * mm:
+                pdf.showPage()
+                y = height - 25 * mm
+
+            pdf_text(
+                pdf,
+                18 * mm,
+                y,
+                index,
+                8
+            )
+
+            pdf_text(
+                pdf,
+                28 * mm,
+                y,
+                str(item.get("desc", ""))[:28],
+                8
+            )
+
+            pdf_text(
+                pdf,
+                92 * mm,
+                y,
+                item.get("hsn", ""),
+                8
+            )
+
+            pdf_text(
+                pdf,
+                116 * mm,
+                y,
+                f"{float(item.get('qty', 0)):g}",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                132 * mm,
+                y,
+                f"{float(item.get('rate', 0)):,.2f}",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                157 * mm,
+                y,
+                f"{float(item.get('gst_rate', 0)):g}",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                174 * mm,
+                y,
+                f"{float(item.get('amount', 0)):,.2f}",
+                8
+            )
+
+            y -= 7 * mm
+
+        # ========================================================
+        # TOTALS
+        # ========================================================
+        y -= 3 * mm
+
+        pdf.line(
+            112 * mm,
+            y,
+            192 * mm,
+            y
+        )
+
+        y -= 7 * mm
+
+        pdf_text(
+            pdf,
+            120 * mm,
+            y,
+            t("taxable_value"),
+            8
+        )
+
+        pdf_text(
+            pdf,
+            170 * mm,
+            y,
+            f"{float(quote.get('taxable_value', 0)):,.2f}",
+            8
+        )
+
+        y -= 6 * mm
+
+        if quote.get("is_intra_state"):
+
+            pdf_text(
+                pdf,
+                120 * mm,
+                y,
+                "CGST",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                170 * mm,
+                y,
+                f"{float(quote.get('cgst', 0)):,.2f}",
+                8
+            )
+
+            y -= 6 * mm
+
+            pdf_text(
+                pdf,
+                120 * mm,
+                y,
+                "SGST",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                170 * mm,
+                y,
+                f"{float(quote.get('sgst', 0)):,.2f}",
+                8
+            )
+
+        else:
+
+            pdf_text(
+                pdf,
+                120 * mm,
+                y,
+                "IGST",
+                8
+            )
+
+            pdf_text(
+                pdf,
+                170 * mm,
+                y,
+                f"{float(quote.get('igst', 0)):,.2f}",
+                8
+            )
+
+        y -= 8 * mm
+
+        pdf.line(
+            112 * mm,
+            y,
+            192 * mm,
+            y
+        )
+
+        y -= 8 * mm
+
+        pdf_text(
+            pdf,
+            120 * mm,
+            y,
+            t("grand_total"),
+            10,
+            True
+        )
+
+        pdf_text(
+            pdf,
+            166 * mm,
+            y,
+            f"Rs. {float(quote.get('grand_total', 0)):,.2f}",
+            10,
+            True
+        )
+
+        # ========================================================
+        # STOCK NOTE
+        # ========================================================
+        y -= 16 * mm
+
+        pdf_text(
+            pdf,
+            18 * mm,
+            y,
+            t("quotation_stock_note"),
+            8
+        )
+
+        pdf.save()
+        buffer.seek(0)
+
+        return buffer.getvalue()
 
 # ============================================================
 # LOAD USER DATA
@@ -1469,6 +3302,9 @@ ensure_inventory_rows(USER_ID, products)
 suppliers = get_suppliers(USER_ID)
 purchases = get_purchases(USER_ID)
 invoices = get_invoices(USER_ID)
+quotations = get_quotations(USER_ID)
+sales_returns = get_sales_returns(USER_ID)
+purchase_returns = get_purchase_returns(USER_ID)
 payments = get_payments(USER_ID)
 inventory = get_inventory(USER_ID)
 stock_ledger = get_stock_ledger(USER_ID)
@@ -1482,14 +3318,20 @@ PAID_MAP = make_paid_map(payments)
 MENU_ICONS = {
     "dashboard": "🏠",
     "new_invoice": "🧾",
+    "quotation": "📄",
     "purchases": "📥",
     "customers": "👥",
     "customer_ledger": "📒",
+    "payment_reminder": "🔔",
     "suppliers": "🏭",
     "products": "📦",
     "stock": "📊",
     "invoice_history": "🕘",
     "purchase_history": "📚",
+    "sales_return": "↩️",
+"purchase_return": "🔄",
+    "expenses": "💸",
+    "edit_delete_history": "📝",
     "reports": "📈",
     "settings": "⚙️",
 }
@@ -1512,59 +3354,248 @@ if st.sidebar.button(f"🚪 {t('logout')}", use_container_width=True):
 if menu == "dashboard":
     st.title(f"🏠 {t('dashboard')}")
 
-    total_sales = sum(float(i.get("grand_total", 0) or 0) for i in invoices)
-    total_tax = sum(
-        float(i.get("cgst", 0) or 0) + float(i.get("sgst", 0) or 0) + float(i.get("igst", 0) or 0)
+    # --------------------------------------------------------
+    # MAIN TOTALS
+    # --------------------------------------------------------
+    total_sales = sum(
+        float(i.get("grand_total", 0) or 0)
         for i in invoices
     )
-    total_purchases = sum(float(p.get("grand_total", 0) or 0) for p in purchases)
+
+    total_tax = sum(
+        float(i.get("cgst", 0) or 0)
+        + float(i.get("sgst", 0) or 0)
+        + float(i.get("igst", 0) or 0)
+        for i in invoices
+    )
+
+    total_purchases = sum(
+        float(p.get("grand_total", 0) or 0)
+        for p in purchases
+    )
+
     stock_value = sum(
-        float(x.get("current_stock", 0) or 0) * float(x.get("purchase_rate", 0) or 0)
+        float(x.get("current_stock", 0) or 0)
+        * float(x.get("purchase_rate", 0) or 0)
         for x in inventory
     )
+
+    # --------------------------------------------------------
+    # EXPENSES
+    # --------------------------------------------------------
+    with engine.connect() as con:
+        dashboard_expenses = [
+            row_dict(r)
+            for r in con.execute(
+                select(expenses_table).where(
+                    expenses_table.c.user_id == USER_ID
+                )
+            ).all()
+        ]
+
+    total_expenses = sum(
+        float(e.get("amount", 0) or 0)
+        for e in dashboard_expenses
+    )
+
+    # --------------------------------------------------------
+    # SALES RETURNS
+    # --------------------------------------------------------
+    total_sales_returns = sum(
+        float(r.get("grand_total", 0) or 0)
+        for r in sales_returns
+    )
+
+    # --------------------------------------------------------
+    # PURCHASE RETURNS
+    # --------------------------------------------------------
+    total_purchase_returns = sum(
+        float(r.get("grand_total", 0) or 0)
+        for r in purchase_returns
+    )
+
+    # --------------------------------------------------------
+    # NET SALES / PURCHASES / PROFIT-LOSS
+    # --------------------------------------------------------
+    net_sales_dashboard = (
+        total_sales
+        - total_sales_returns
+    )
+
+    net_purchases_dashboard = (
+        total_purchases
+        - total_purchase_returns
+    )
+
+    estimated_profit_loss_dashboard = (
+        net_sales_dashboard
+        - net_purchases_dashboard
+        - total_expenses
+    )
+
+    # --------------------------------------------------------
+    # TODAY COUNTS
+    # --------------------------------------------------------
     today_str = date.today().strftime("%d-%m-%Y")
-    today_count = sum(1 for i in invoices if i.get("invoice_date") == today_str)
-    today_purchase_count = sum(1 for p in purchases if p.get("purchase_date") == today_str)
+
+    today_count = sum(
+        1
+        for i in invoices
+        if i.get("invoice_date") == today_str
+    )
+
+    today_purchase_count = sum(
+        1
+        for p in purchases
+        if p.get("purchase_date") == today_str
+    )
+
+    # --------------------------------------------------------
+    # LOW STOCK
+    # --------------------------------------------------------
     low_items = [
-        x for x in inventory
+        x
+        for x in inventory
         if x.get("unit") != "Service"
         and float(x.get("low_stock_limit", 0) or 0) > 0
-        and float(x.get("current_stock", 0) or 0) <= float(x.get("low_stock_limit", 0) or 0)
+        and float(x.get("current_stock", 0) or 0)
+        <= float(x.get("low_stock_limit", 0) or 0)
     ]
 
+    # --------------------------------------------------------
+    # DASHBOARD CARDS - ROW 1
+    # --------------------------------------------------------
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(t("total_invoices"), len(invoices))
-    c2.metric(t("total_sales"), money(total_sales))
-    c3.metric(t("today_invoices"), today_count)
-    c4.metric(t("total_gst"), money(total_tax))
 
+    c1.metric(
+        t("total_invoices"),
+        len(invoices),
+    )
+
+    c2.metric(
+        t("total_sales"),
+        money(total_sales),
+    )
+
+    c3.metric(
+        t("today_invoices"),
+        today_count,
+    )
+
+    c4.metric(
+        t("total_gst"),
+        money(total_tax),
+    )
+
+    # --------------------------------------------------------
+    # DASHBOARD CARDS - ROW 2
+    # --------------------------------------------------------
     c5, c6, c7, c8 = st.columns(4)
-    c5.metric(t("total_purchases"), money(total_purchases))
-    c6.metric(t("today_purchases"), today_purchase_count)
-    c7.metric(t("stock_value"), money(stock_value))
-    c8.metric(t("low_stock"), len(low_items))
 
+    c5.metric(
+        t("total_purchases"),
+        money(total_purchases),
+    )
+
+    c6.metric(
+        t("today_purchases"),
+        today_purchase_count,
+    )
+
+    c7.metric(
+        t("stock_value"),
+        money(stock_value),
+    )
+
+    c8.metric(
+        t("low_stock"),
+        len(low_items),
+    )
+
+    # --------------------------------------------------------
+    # V5.3 - EXPENSES + PROFIT / LOSS CARDS
+    # --------------------------------------------------------
+    c9, c10 = st.columns(2)
+
+    c9.metric(
+        t("total_expenses"),
+        money(total_expenses),
+    )
+
+    c10.metric(
+        t("estimated_profit_loss"),
+        money(estimated_profit_loss_dashboard),
+    )
+
+    # --------------------------------------------------------
+    # LOW STOCK WARNING
+    # --------------------------------------------------------
     if low_items:
-        product_by_id = {int(p["id"]): p for p in products}
-        names = []
-        for x in low_items[:8]:
-            p = product_by_id.get(int(x["product_id"]), {})
-            names.append(f"{p.get('name', t('product'))}: {float(x.get('current_stock',0)):g} {x.get('unit','')}")
-        st.warning("⚠️ " + t("low_stock") + ": " + " | ".join(names))
+        product_by_id = {
+            int(p["id"]): p
+            for p in products
+        }
 
+        names = []
+
+        for x in low_items[:8]:
+            p = product_by_id.get(
+                int(x["product_id"]),
+                {},
+            )
+
+            names.append(
+                f"{p.get('name', t('product'))}: "
+                f"{float(x.get('current_stock', 0)):g} "
+                f"{x.get('unit', '')}"
+            )
+
+        st.warning(
+            "⚠️ "
+            + t("low_stock")
+            + ": "
+            + " | ".join(names)
+        )
+
+    # --------------------------------------------------------
+    # RECENT INVOICES / PURCHASES
+    # --------------------------------------------------------
     st.markdown("---")
+
     left_recent, right_recent = st.columns(2)
+
     with left_recent:
-        st.subheader(t("recent_invoices"))
+        st.subheader(
+            t("recent_invoices")
+        )
+
         if not invoices:
-            st.info(t("no_invoices"))
+            st.info(
+                t("no_invoices")
+            )
+
         for inv in invoices[-5:][::-1]:
-            with st.expander(f"{inv['invoice_number']} | {inv['customer_name']} | {money(inv['grand_total'])}"):
-                st.write(f"**{t('date')}:** {inv['invoice_date']}")
-                st.write(f"**{t('grand_total')}:** {money(inv['grand_total'])}")
+            with st.expander(
+                f"{inv['invoice_number']} | "
+                f"{inv['customer_name']} | "
+                f"{money(inv['grand_total'])}"
+            ):
+                st.write(
+                    f"**{t('date')}:** "
+                    f"{inv['invoice_date']}"
+                )
+
+                st.write(
+                    f"**{t('grand_total')}:** "
+                    f"{money(inv['grand_total'])}"
+                )
+
                 st.download_button(
                     t("download_pdf"),
-                    make_invoice_pdf(inv, current_user),
+                    make_invoice_pdf(
+                        inv,
+                        current_user,
+                    ),
                     f"{clean_filename(inv['invoice_number'])}.pdf",
                     "application/pdf",
                     key=f"dash_pdf_{inv['id']}",
@@ -1572,13 +3603,30 @@ if menu == "dashboard":
                 )
 
     with right_recent:
-        st.subheader(t("recent_purchases"))
+        st.subheader(
+            t("recent_purchases")
+        )
+
         if not purchases:
-            st.info(t("no_purchases"))
+            st.info(
+                t("no_purchases")
+            )
+
         for pur in purchases[-5:][::-1]:
-            with st.expander(f"{pur['bill_number']} | {pur['supplier_name']} | {money(pur['grand_total'])}"):
-                st.write(f"**{t('date')}:** {pur['purchase_date']}")
-                st.write(f"**{t('grand_total')}:** {money(pur['grand_total'])}")
+            with st.expander(
+                f"{pur['bill_number']} | "
+                f"{pur['supplier_name']} | "
+                f"{money(pur['grand_total'])}"
+            ):
+                st.write(
+                    f"**{t('date')}:** "
+                    f"{pur['purchase_date']}"
+                )
+
+                st.write(
+                    f"**{t('grand_total')}:** "
+                    f"{money(pur['grand_total'])}"
+                )
 
 # ============================================================
 # NEW INVOICE
@@ -1737,6 +3785,322 @@ elif menu == "new_invoice":
                 f"{clean_filename(invoice_number)}.pdf", "application/pdf",
                 use_container_width=True,
             )
+
+# ============================================================
+# V5.2 - QUOTATION / ESTIMATE
+# ============================================================
+elif menu == "quotation":
+    st.title(f"📄 {t('create_quotation')}")
+    st.info(t("quotation_stock_note"))
+
+    q_left, q_right = st.columns(2)
+    customer_map = {c["name"]: c for c in customers}
+
+    with q_left:
+        st.subheader(t("customer_info"))
+        q_choice = st.selectbox(
+            t("saved_customer"),
+            [t("manual_customer")] + list(customer_map.keys()),
+            key="quotation_customer_choice",
+        )
+        q_cdata = customer_map.get(q_choice, {})
+        q_customer_name = st.text_input(
+            t("customer_name"),
+            value=q_cdata.get("name", ""),
+            key=f"quotation_customer_name_{q_choice}",
+        )
+        q_customer_address = st.text_area(
+            t("customer_address"),
+            value=q_cdata.get("address", ""),
+            key=f"quotation_customer_address_{q_choice}",
+        )
+        q_customer_gstin = st.text_input(
+            t("customer_gstin"),
+            value=q_cdata.get("gstin", ""),
+            key=f"quotation_customer_gstin_{q_choice}",
+        )
+        q_state0 = (
+            q_cdata.get("state", "Maharashtra")
+            if q_cdata.get("state", "Maharashtra") in STATES
+            else "Maharashtra"
+        )
+        q_customer_state = st.selectbox(
+            t("customer_state"),
+            STATES,
+            index=STATES.index(q_state0),
+            format_func=state_label,
+            key=f"quotation_customer_state_{q_choice}",
+        )
+
+    with q_right:
+        st.subheader(t("quotation_details"))
+        q_suggested = f"QT-{datetime.now().strftime('%Y%m%d')}-{len(quotations)+1:03d}"
+        quotation_number = st.text_input(
+            t("quotation_number"),
+            value=q_suggested,
+            key="quotation_number_input",
+        )
+        quotation_date = st.date_input(
+            t("quotation_date"),
+            value=date.today(),
+            key="quotation_date_input",
+        )
+        valid_until = st.date_input(
+            t("valid_until"),
+            value=date.today() + timedelta(days=7),
+            key="quotation_valid_until_input",
+        )
+        q_place_supply = st.selectbox(
+            t("place_of_supply"),
+            STATES,
+            index=(
+                STATES.index(q_customer_state)
+                if q_customer_state in STATES
+                else STATES.index("Maharashtra")
+            ),
+            format_func=state_label,
+            key="quotation_place_supply",
+        )
+
+    st.markdown("---")
+    st.subheader(f"📦 {t('goods_services')}")
+
+    q_nitems = int(
+        st.number_input(
+            t("number_of_items"),
+            min_value=1,
+            max_value=20,
+            value=1,
+            step=1,
+            key="quotation_item_count",
+        )
+    )
+    q_pmap = {p["name"]: p for p in products}
+    quotation_items = []
+
+    for i in range(q_nitems):
+        st.markdown(f"**{t('item')} {i+1}**")
+        q_pchoice = st.selectbox(
+            t("saved_product"),
+            [t("custom_item")] + list(q_pmap.keys()),
+            key=f"quotation_product_choice_{i}",
+        )
+        q_pdata = q_pmap.get(q_pchoice, {})
+        q_product_id = int(q_pdata["id"]) if q_pdata else None
+        q_invdata = INV_MAP.get(q_product_id, {}) if q_product_id else {}
+
+        if q_product_id:
+            st.caption(
+                f"{t('current_stock')}: "
+                f"{float(q_invdata.get('current_stock',0) or 0):g} "
+                f"{unit_label(q_invdata.get('unit','Pcs'))}"
+            )
+
+        qa, qb, qc, qd, qe = st.columns([3, 1.2, 1, 1.3, 1.1])
+        with qa:
+            q_desc = st.text_input(
+                t("description"),
+                value=q_pdata.get("name", ""),
+                key=f"quotation_desc_{i}_{q_pchoice}",
+            )
+        with qb:
+            q_hsn = st.text_input(
+                t("hsn_sac"),
+                value=q_pdata.get("hsn", ""),
+                key=f"quotation_hsn_{i}_{q_pchoice}",
+            )
+        with qc:
+            q_qty = st.number_input(
+                t("quantity"),
+                min_value=0.01,
+                value=1.0,
+                step=1.0,
+                key=f"quotation_qty_{i}",
+            )
+        with qd:
+            q_rate = st.number_input(
+                t("rate"),
+                min_value=0.0,
+                value=float(q_pdata.get("rate", 0.0) or 0.0),
+                step=10.0,
+                key=f"quotation_rate_{i}_{q_pchoice}",
+            )
+        with qe:
+            q_opts = [0, 5, 12, 18, 28]
+            q_default_gst = int(q_pdata.get("gst_rate", 18) or 18) if q_pdata else 18
+            if q_default_gst not in q_opts:
+                q_default_gst = 18
+            q_gst = st.selectbox(
+                t("gst_percent"),
+                q_opts,
+                index=q_opts.index(q_default_gst),
+                key=f"quotation_gst_{i}_{q_pchoice}",
+            )
+
+        q_track_stock = bool(q_product_id and q_invdata.get("unit") != "Service")
+        quotation_items.append({
+            "product_id": q_product_id,
+            "track_stock": q_track_stock,
+            "desc": q_desc,
+            "hsn": q_hsn,
+            "qty": float(q_qty),
+            "rate": float(q_rate),
+            "gst_rate": float(q_gst),
+            "amount": float(q_qty) * float(q_rate),
+        })
+        st.markdown("---")
+
+    q_taxable = sum(x["amount"] for x in quotation_items)
+    q_intra = current_user.get("company_state") == q_place_supply
+    q_cgst = q_sgst = q_igst = 0.0
+    for x in quotation_items:
+        q_tax = x["amount"] * x["gst_rate"] / 100.0
+        if q_intra:
+            q_cgst += q_tax / 2.0
+            q_sgst += q_tax / 2.0
+        else:
+            q_igst += q_tax
+    q_grand = q_taxable + q_cgst + q_sgst + q_igst
+
+    qm1, qm2, qm3 = st.columns(3)
+    qm1.metric(t("taxable_value"), money(q_taxable))
+    qm2.metric("CGST + SGST" if q_intra else "IGST", money(q_cgst + q_sgst if q_intra else q_igst))
+    qm3.metric(t("grand_total"), money(q_grand))
+
+    if st.button(
+        t("save_quotation"),
+        use_container_width=True,
+        type="primary",
+        key="save_quotation_button",
+    ):
+        if not q_customer_name.strip():
+            st.error(t("customer_required"))
+        elif valid_until < quotation_date:
+            st.error(t("quotation_validity_error"))
+        elif any(
+            str(q.get("quotation_number", "")).strip().lower()
+            == quotation_number.strip().lower()
+            for q in quotations
+        ):
+            st.error(t("quotation_duplicate"))
+        else:
+            try:
+                with engine.begin() as con:
+                    result = con.execute(
+                        insert(quotations_table).values(
+                            user_id=USER_ID,
+                            quotation_number=quotation_number.strip(),
+                            quotation_date=quotation_date.strftime("%d-%m-%Y"),
+                            valid_until=valid_until.strftime("%d-%m-%Y"),
+                            customer_name=q_customer_name.strip(),
+                            customer_address=q_customer_address.strip(),
+                            customer_gstin=q_customer_gstin.strip(),
+                            customer_state=q_customer_state,
+                            place_of_supply=q_place_supply,
+                            items_json=json.dumps(quotation_items, ensure_ascii=False),
+                            taxable_value=q_taxable,
+                            cgst=q_cgst,
+                            sgst=q_sgst,
+                            igst=q_igst,
+                            grand_total=q_grand,
+                            is_intra_state=q_intra,
+                            created_at=now_naive(),
+                        )
+                    )
+                    quotation_id = int(result.inserted_primary_key[0])
+            except IntegrityError:
+                st.error(t("quotation_duplicate"))
+                st.stop()
+
+            if q_customer_name.strip() and not any(
+                c["name"].strip().lower() == q_customer_name.strip().lower()
+                for c in customers
+            ):
+                with engine.begin() as con:
+                    con.execute(
+                        insert(customers_table).values(
+                            user_id=USER_ID,
+                            name=q_customer_name.strip(),
+                            address=q_customer_address.strip(),
+                            gstin=q_customer_gstin.strip(),
+                            state=q_customer_state,
+                            created_at=now_naive(),
+                        )
+                    )
+
+            new_quote = {
+                "id": quotation_id,
+                "quotation_number": quotation_number.strip(),
+                "quotation_date": quotation_date.strftime("%d-%m-%Y"),
+                "valid_until": valid_until.strftime("%d-%m-%Y"),
+                "customer_name": q_customer_name.strip(),
+                "customer_address": q_customer_address.strip(),
+                "customer_gstin": q_customer_gstin.strip(),
+                "customer_state": q_customer_state,
+                "place_of_supply": q_place_supply,
+                "items": quotation_items,
+                "taxable_value": q_taxable,
+                "cgst": q_cgst,
+                "sgst": q_sgst,
+                "igst": q_igst,
+                "grand_total": q_grand,
+                "is_intra_state": q_intra,
+            }
+            quotations.append(new_quote)
+
+            st.success(t("quotation_saved"))
+            st.download_button(
+                t("download_pdf"),
+                make_quotation_pdf(new_quote, current_user),
+                f"{clean_filename(quotation_number)}.pdf",
+                "application/pdf",
+                use_container_width=True,
+                key=f"new_quotation_pdf_{quotation_id}",
+            )
+
+    st.markdown("---")
+    st.subheader(f"📚 {t('saved_quotations')}")
+
+    if not quotations:
+        st.info(t("no_quotations"))
+    else:
+        q_search = st.text_input(
+            f"🔎 {t('search_quotation')}",
+            key="quotation_history_search",
+        ).strip().lower()
+        filtered_quotes = quotations if not q_search else [
+            q for q in quotations
+            if q_search in str(q.get("quotation_number", "")).lower()
+            or q_search in str(q.get("customer_name", "")).lower()
+        ]
+        st.caption(f"{len(filtered_quotes)} {t('found')}")
+
+        for quote in filtered_quotes[::-1]:
+            with st.expander(
+                f"{quote.get('quotation_number','')} | "
+                f"{quote.get('customer_name','')} | "
+                f"{money(quote.get('grand_total',0))} | "
+                f"{quote.get('quotation_date','')}"
+            ):
+                st.write(f"**{t('valid_until')}:** {quote.get('valid_until','')}")
+                st.write(f"**{t('address')}:** {quote.get('customer_address','')}")
+                st.write(f"**GSTIN:** {quote.get('customer_gstin','')}")
+                st.write(f"**{t('taxable_value')}:** {money(quote.get('taxable_value',0))}")
+                st.write(f"**{t('grand_total')}:** {money(quote.get('grand_total',0))}")
+                for q_item in quote.get("items", []):
+                    st.caption(
+                        f"{q_item.get('desc','')} — "
+                        f"{float(q_item.get('qty',0)):g} × "
+                        f"{money(q_item.get('rate',0))}"
+                    )
+                st.download_button(
+                    t("download_pdf"),
+                    make_quotation_pdf(quote, current_user),
+                    f"{clean_filename(quote.get('quotation_number','quotation'))}.pdf",
+                    "application/pdf",
+                    key=f"quotation_hist_pdf_{quote.get('id')}",
+                    use_container_width=True,
+                )
 
 # ============================================================
 # PURCHASES / STOCK IN
@@ -1972,6 +4336,408 @@ elif menu == "customer_ledger":
                         f"{money(inv.get('grand_total',0))} | {t(status_key)} | "
                         f"{t('paid_amount')}: {money(paid_amount)} | {t('balance_amount')}: {money(balance)}"
                     )
+                    # ============================================================
+# V5.3 - OUTSTANDING / PAYMENT REMINDER
+# ============================================================
+elif menu == "payment_reminder":
+    st.title(f"🔔 {t('payment_reminder')}")
+
+    # --------------------------------------------------------
+    # CALCULATE SALES RETURN CREDIT PER INVOICE
+    # --------------------------------------------------------
+    return_credit_by_invoice = {}
+
+    for ret in sales_returns:
+        invoice_id = int(
+            ret.get("original_invoice_id", 0) or 0
+        )
+
+        return_credit_by_invoice[invoice_id] = (
+            return_credit_by_invoice.get(invoice_id, 0.0)
+            + float(ret.get("grand_total", 0) or 0)
+        )
+
+    # --------------------------------------------------------
+    # BUILD CUSTOMER OUTSTANDING DATA
+    # --------------------------------------------------------
+    outstanding_by_customer = {}
+
+    total_outstanding_all = 0.0
+    total_pending_invoices = 0
+
+    for inv in invoices:
+        invoice_id = int(inv.get("id", 0) or 0)
+
+        invoice_total = float(
+            inv.get("grand_total", 0) or 0
+        )
+
+        sales_return_credit = float(
+            return_credit_by_invoice.get(
+                invoice_id,
+                0.0,
+            )
+            or 0.0
+        )
+
+        net_invoice_total = max(
+            0.0,
+            invoice_total - sales_return_credit,
+        )
+
+        paid_amount = float(
+            PAID_MAP.get(
+                invoice_id,
+                0.0,
+            )
+            or 0.0
+        )
+
+        balance_amount = max(
+            0.0,
+            net_invoice_total - paid_amount,
+        )
+
+        if balance_amount <= 0.005:
+            continue
+
+        customer_name = str(
+            inv.get(
+                "customer_name",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if not customer_name:
+            customer_name = "Customer"
+
+        customer_key = customer_name.lower()
+
+        if customer_key not in outstanding_by_customer:
+            outstanding_by_customer[customer_key] = {
+                "name": customer_name,
+                "total": 0.0,
+                "invoices": [],
+            }
+
+        outstanding_by_customer[customer_key]["total"] += (
+            balance_amount
+        )
+
+        outstanding_by_customer[customer_key]["invoices"].append({
+            "invoice_number": inv.get(
+                "invoice_number",
+                "",
+            ),
+            "invoice_date": inv.get(
+                "invoice_date",
+                "",
+            ),
+            "original_total": invoice_total,
+            "return_credit": sales_return_credit,
+            "net_total": net_invoice_total,
+            "paid": paid_amount,
+            "balance": balance_amount,
+        })
+
+        total_outstanding_all += balance_amount
+        total_pending_invoices += 1
+
+    outstanding_customers = list(
+        outstanding_by_customer.values()
+    )
+
+    outstanding_customers.sort(
+        key=lambda row: row["total"],
+        reverse=True,
+    )
+
+    # --------------------------------------------------------
+    # SUMMARY CARDS
+    # --------------------------------------------------------
+    oc1, oc2, oc3 = st.columns(3)
+
+    oc1.metric(
+        t("outstanding_amount"),
+        money(total_outstanding_all),
+    )
+
+    oc2.metric(
+        t("customers_with_outstanding"),
+        len(outstanding_customers),
+    )
+
+    oc3.metric(
+        t("pending_invoices"),
+        total_pending_invoices,
+    )
+
+    st.markdown("---")
+
+    if not outstanding_customers:
+        st.success(t("no_outstanding"))
+
+    else:
+        reminder_search = st.text_input(
+            f"🔎 {t('customer_name')}",
+            key="payment_reminder_search",
+        ).strip().lower()
+
+        visible_customers = [
+            row
+            for row in outstanding_customers
+            if not reminder_search
+            or reminder_search in row["name"].lower()
+        ]
+
+        st.caption(
+            f"{len(visible_customers)} "
+            f"{t('customers_with_outstanding')}"
+        )
+
+        # ----------------------------------------------------
+        # REMINDER MESSAGE TEMPLATES
+        # ----------------------------------------------------
+        def build_reminder_message(
+            customer_name,
+            balance,
+            pending_rows,
+        ):
+            company_name = str(
+                current_user.get(
+                    "company_name",
+                    "SHIVPRUBA BILLING",
+                )
+                or "SHIVPRUBA BILLING"
+            )
+
+            invoice_lines = []
+
+            for row in pending_rows:
+                invoice_lines.append(
+                    f"{row['invoice_number']} "
+                    f"({row['invoice_date']}) - "
+                    f"{money(row['balance'])}"
+                )
+
+            invoices_text = "\n".join(
+                invoice_lines
+            )
+
+            messages = {
+                "en": (
+                    f"Hello {customer_name},\n\n"
+                    f"This is a payment reminder from {company_name}.\n"
+                    f"Your outstanding amount is {money(balance)}.\n\n"
+                    f"Pending invoices:\n{invoices_text}\n\n"
+                    f"Kindly arrange the pending payment at your convenience.\n"
+                    f"Thank you."
+                ),
+
+                "mr": (
+                    f"नमस्कार {customer_name},\n\n"
+                    f"{company_name} कडून पेमेंटची आठवण करून देत आहोत.\n"
+                    f"आपली बाकी रक्कम {money(balance)} आहे.\n\n"
+                    f"बाकी बिले:\n{invoices_text}\n\n"
+                    f"कृपया सोयीप्रमाणे बाकी पेमेंट पूर्ण करावे.\n"
+                    f"धन्यवाद."
+                ),
+
+                "hi": (
+                    f"नमस्ते {customer_name},\n\n"
+                    f"{company_name} की ओर से भुगतान की याद दिलाई जा रही है।\n"
+                    f"आपकी बकाया राशि {money(balance)} है।\n\n"
+                    f"बकाया बिल:\n{invoices_text}\n\n"
+                    f"कृपया सुविधानुसार बकाया भुगतान कर दें।\n"
+                    f"धन्यवाद।"
+                ),
+
+                "gu": (
+                    f"નમસ્તે {customer_name},\n\n"
+                    f"{company_name} તરફથી ચુકવણીની યાદ અપાવવામાં આવે છે.\n"
+                    f"તમારી બાકી રકમ {money(balance)} છે.\n\n"
+                    f"બાકી બિલ:\n{invoices_text}\n\n"
+                    f"કૃપા કરીને અનુકૂળ સમયે બાકી ચુકવણી કરો.\n"
+                    f"આભાર."
+                ),
+
+                "bn": (
+                    f"নমস্কার {customer_name},\n\n"
+                    f"{company_name} থেকে পেমেন্টের কথা স্মরণ করিয়ে দেওয়া হচ্ছে।\n"
+                    f"আপনার বকেয়া পরিমাণ {money(balance)}।\n\n"
+                    f"বকেয়া বিল:\n{invoices_text}\n\n"
+                    f"অনুগ্রহ করে সুবিধামতো বকেয়া পরিশোধ করুন।\n"
+                    f"ধন্যবাদ।"
+                ),
+
+                "ta": (
+                    f"வணக்கம் {customer_name},\n\n"
+                    f"{company_name} சார்பாக கட்டண நினைவூட்டல்.\n"
+                    f"உங்களின் நிலுவை தொகை {money(balance)}.\n\n"
+                    f"நிலுவை பில்கள்:\n{invoices_text}\n\n"
+                    f"தயவுசெய்து வசதியான நேரத்தில் நிலுவை தொகையை செலுத்தவும்.\n"
+                    f"நன்றி."
+                ),
+
+                "te": (
+                    f"నమస్కారం {customer_name},\n\n"
+                    f"{company_name} నుండి చెల్లింపు రిమైండర్.\n"
+                    f"మీ బాకీ మొత్తం {money(balance)}.\n\n"
+                    f"బాకీ బిల్లులు:\n{invoices_text}\n\n"
+                    f"దయచేసి వీలైనప్పుడు బాకీ చెల్లించండి.\n"
+                    f"ధన్యవాదాలు."
+                ),
+
+                "kn": (
+                    f"ನಮಸ್ಕಾರ {customer_name},\n\n"
+                    f"{company_name} ವತಿಯಿಂದ ಪಾವತಿ ನೆನಪಿಸುವ ಸಂದೇಶ.\n"
+                    f"ನಿಮ್ಮ ಬಾಕಿ ಮೊತ್ತ {money(balance)}.\n\n"
+                    f"ಬಾಕಿ ಬಿಲ್ಲುಗಳು:\n{invoices_text}\n\n"
+                    f"ದಯವಿಟ್ಟು ಅನುಕೂಲವಾದ ಸಮಯದಲ್ಲಿ ಬಾಕಿ ಪಾವತಿಸಿ.\n"
+                    f"ಧನ್ಯವಾದಗಳು."
+                ),
+
+                "ml": (
+                    f"നമസ്കാരം {customer_name},\n\n"
+                    f"{company_name}ൽ നിന്നുള്ള പേയ്മെന്റ് ഓർമ്മപ്പെടുത്തലാണ്.\n"
+                    f"നിങ്ങളുടെ കുടിശ്ശിക തുക {money(balance)} ആണ്.\n\n"
+                    f"കുടിശ്ശിക ബില്ലുകൾ:\n{invoices_text}\n\n"
+                    f"സൗകര്യപ്രദമായ സമയത്ത് കുടിശ്ശിക അടയ്ക്കുക.\n"
+                    f"നന്ദി."
+                ),
+
+                "pa": (
+                    f"ਸਤ ਸ੍ਰੀ ਅਕਾਲ {customer_name},\n\n"
+                    f"{company_name} ਵੱਲੋਂ ਭੁਗਤਾਨ ਦੀ ਯਾਦ ਦਿਵਾਈ ਜਾ ਰਹੀ ਹੈ।\n"
+                    f"ਤੁਹਾਡੀ ਬਕਾਇਆ ਰਕਮ {money(balance)} ਹੈ।\n\n"
+                    f"ਬਕਾਇਆ ਬਿੱਲ:\n{invoices_text}\n\n"
+                    f"ਕਿਰਪਾ ਕਰਕੇ ਸੁਵਿਧਾ ਅਨੁਸਾਰ ਬਕਾਇਆ ਭੁਗਤਾਨ ਕਰੋ।\n"
+                    f"ਧੰਨਵਾਦ।"
+                ),
+            }
+
+            return messages.get(
+                selected_lang,
+                messages["en"],
+            )
+
+        # ----------------------------------------------------
+        # CUSTOMER-WISE OUTSTANDING
+        # ----------------------------------------------------
+        for reminder_index, customer in enumerate(
+            visible_customers
+        ):
+            customer_name = customer["name"]
+            customer_total = float(
+                customer["total"]
+                or 0
+            )
+
+            pending_rows = customer[
+                "invoices"
+            ]
+
+            with st.expander(
+                f"🔔 {customer_name} | "
+                f"{t('outstanding_amount')}: "
+                f"{money(customer_total)}"
+            ):
+
+                rc1, rc2 = st.columns(2)
+
+                rc1.metric(
+                    t("outstanding_amount"),
+                    money(customer_total),
+                )
+
+                rc2.metric(
+                    t("pending_invoices"),
+                    len(pending_rows),
+                )
+
+                st.markdown(
+                    f"**{t('pending_invoices')}**"
+                )
+
+                for pending in pending_rows:
+                    st.write(
+                        f"**{pending['invoice_number']}**"
+                        f" | {pending['invoice_date']}"
+                        f" | {t('grand_total')}: "
+                        f"{money(pending['net_total'])}"
+                        f" | {t('paid_amount')}: "
+                        f"{money(pending['paid'])}"
+                        f" | {t('balance_amount')}: "
+                        f"{money(pending['balance'])}"
+                    )
+
+                    if (
+                        float(
+                            pending.get(
+                                "return_credit",
+                                0,
+                            )
+                            or 0
+                        )
+                        > 0.005
+                    ):
+                        st.caption(
+                            f"{t('sales_return_credit')}: "
+                            f"{money(pending['return_credit'])}"
+                        )
+
+                st.markdown("---")
+
+                reminder_message = (
+                    build_reminder_message(
+                        customer_name,
+                        customer_total,
+                        pending_rows,
+                    )
+                )
+
+                st.markdown(
+                    f"**💬 {t('reminder_message')}**"
+                )
+
+                st.text_area(
+                    t("reminder_message"),
+                    value=reminder_message,
+                    height=220,
+                    key=(
+                        "reminder_message_"
+                        f"{reminder_index}"
+                    ),
+                )
+
+                reminder_file_name = re.sub(
+                    r"[^A-Za-z0-9_-]+",
+                    "_",
+                    customer_name,
+                ).strip("_")
+
+                if not reminder_file_name:
+                    reminder_file_name = (
+                        "customer"
+                    )
+
+                st.download_button(
+                    f"⬇️ {t('download_reminder')}",
+                    data=reminder_message.encode(
+                        "utf-8"
+                    ),
+                    file_name=(
+                        f"payment_reminder_"
+                        f"{reminder_file_name}.txt"
+                    ),
+                    mime="text/plain",
+                    use_container_width=True,
+                    key=(
+                        "download_reminder_"
+                        f"{reminder_index}"
+                    ),
+                )
 
 # ============================================================
 # SUPPLIERS
@@ -2213,111 +4979,1083 @@ elif menu == "stock":
         )
 
 # ============================================================
-# INVOICE HISTORY + PAYMENTS
+# INVOICE HISTORY + PAYMENTS + EDIT / DELETE
 # ============================================================
+
 elif menu == "invoice_history":
     st.title(f"🕘 {t('invoice_history')}")
+
     if not invoices:
         st.info(t("no_invoices"))
+
     else:
-        search_text = st.text_input(f"🔎 {t('search_invoice')}").strip().lower()
+        search_text = st.text_input(
+            f"🔎 {t('search_invoice')}"
+        ).strip().lower()
+
         filtered = invoices if not search_text else [
             inv for inv in invoices
-            if search_text in inv["invoice_number"].lower()
-            or search_text in inv["customer_name"].lower()
+            if search_text in str(inv.get("invoice_number", "")).lower()
+            or search_text in str(inv.get("customer_name", "")).lower()
         ]
+
         st.caption(f"{len(filtered)} {t('found')}")
 
         for inv in filtered[::-1]:
-            paid_amount, balance, status_key = payment_status_for_invoice(inv, PAID_MAP)
+
+            paid_amount, balance, status_key = payment_status_for_invoice(
+                inv,
+                PAID_MAP,
+            )
+
             with st.expander(
-                f"{inv['invoice_number']} | {inv['customer_name']} | {money(inv['grand_total'])} | "
-                f"{inv['invoice_date']} | {t(status_key)}"
+                f"{inv['invoice_number']} | "
+                f"{inv['customer_name']} | "
+                f"{money(inv['grand_total'])} | "
+                f"{inv['invoice_date']} | "
+                f"{t(status_key)}"
             ):
-                st.write(f"**{t('address')}:** {inv.get('customer_address','')}")
-                st.write(f"**GSTIN:** {inv.get('customer_gstin','')}")
-                st.write(f"**{t('taxable_value')}:** {money(inv.get('taxable_value',0))}")
-                st.write(f"**{t('grand_total')}:** {money(inv.get('grand_total',0))}")
+
+                # ------------------------------------------------
+                # INVOICE DETAILS
+                # ------------------------------------------------
+
+                st.write(
+                    f"**{t('address')}:** "
+                    f"{inv.get('customer_address', '')}"
+                )
+
+                st.write(
+                    f"**GSTIN:** "
+                    f"{inv.get('customer_gstin', '')}"
+                )
+
+                st.write(
+                    f"**{t('taxable_value')}:** "
+                    f"{money(inv.get('taxable_value', 0))}"
+                )
+
+                st.write(
+                    f"**{t('grand_total')}:** "
+                    f"{money(inv.get('grand_total', 0))}"
+                )
+
+                # ------------------------------------------------
+                # PAYMENT STATUS
+                # ------------------------------------------------
 
                 p1, p2, p3 = st.columns(3)
-                p1.metric(t("payment_status"), t(status_key))
-                p2.metric(t("paid_amount"), money(paid_amount))
-                p3.metric(t("balance_amount"), money(balance))
+
+                p1.metric(
+                    t("payment_status"),
+                    t(status_key),
+                )
+
+                p2.metric(
+                    t("paid_amount"),
+                    money(paid_amount),
+                )
+
+                p3.metric(
+                    t("balance_amount"),
+                    money(balance),
+                )
+
+                # ------------------------------------------------
+                # PAYMENT HISTORY
+                # ------------------------------------------------
 
                 inv_payments = [
                     p for p in payments
-                    if int(p.get("invoice_id", 0) or 0) == int(inv["id"])
+                    if int(p.get("invoice_id", 0) or 0)
+                    == int(inv["id"])
                 ]
+
                 if inv_payments:
-                    st.markdown(f"**{t('payment_history')}**")
+
+                    st.markdown(
+                        f"**{t('payment_history')}**"
+                    )
+
                     for payment in inv_payments[::-1]:
+
                         pay_col, delete_col = st.columns([5, 1])
+
                         with pay_col:
-                            note_text = f" | {payment.get('note','')}" if str(payment.get("note", "")).strip() else ""
-                            st.write(
-                                f"{payment.get('payment_date','')} | **{money(payment.get('amount',0))}**{note_text}"
+
+                            note_text = (
+                                f" | {payment.get('note', '')}"
+                                if str(
+                                    payment.get("note", "")
+                                ).strip()
+                                else ""
                             )
+
+                            st.write(
+                                f"{payment.get('payment_date', '')}"
+                                f" | "
+                                f"**{money(payment.get('amount', 0))}**"
+                                f"{note_text}"
+                            )
+
                         with delete_col:
+
                             if st.button(
                                 f"🗑️ {t('delete')}",
-                                key=f"delete_payment_{inv['id']}_{payment['id']}",
+                                key=(
+                                    f"delete_payment_"
+                                    f"{inv['id']}_"
+                                    f"{payment['id']}"
+                                ),
                                 use_container_width=True,
                             ):
+
                                 with engine.begin() as con:
-                                    con.execute(delete(payments_table).where(
-                                        payments_table.c.id == int(payment["id"]),
-                                        payments_table.c.user_id == USER_ID,
-                                        payments_table.c.invoice_id == int(inv["id"]),
-                                    ))
-                                st.success(t("payment_deleted"))
+
+                                    con.execute(
+                                        delete(
+                                            payments_table
+                                        ).where(
+                                            payments_table.c.id
+                                            == int(payment["id"]),
+                                            payments_table.c.user_id
+                                            == USER_ID,
+                                            payments_table.c.invoice_id
+                                            == int(inv["id"]),
+                                        )
+                                    )
+
+                                st.success(
+                                    t("payment_deleted")
+                                )
+
                                 st.rerun()
+
                 else:
-                    st.caption(t("no_payments"))
+
+                    st.caption(
+                        t("no_payments")
+                    )
+
+                # ------------------------------------------------
+                # RECORD PAYMENT
+                # ------------------------------------------------
 
                 if balance > 0.005:
-                    with st.form(f"payment_form_{inv['id']}"):
-                        st.markdown(f"**💳 {t('record_payment')}**")
+
+                    with st.form(
+                        f"payment_form_{inv['id']}"
+                    ):
+
+                        st.markdown(
+                            f"**💳 {t('record_payment')}**"
+                        )
+
                         payment_amount = st.number_input(
-                            t("payment_amount"), min_value=0.01, max_value=float(balance),
-                            value=float(balance), step=1.0, key=f"pay_amount_{inv['id']}"
+                            t("payment_amount"),
+                            min_value=0.01,
+                            max_value=float(balance),
+                            value=float(balance),
+                            step=1.0,
+                            key=f"pay_amount_{inv['id']}",
                         )
+
                         payment_date_value = st.date_input(
-                            t("payment_date"), value=date.today(), key=f"pay_date_{inv['id']}"
+                            t("payment_date"),
+                            value=date.today(),
+                            key=f"pay_date_{inv['id']}",
                         )
-                        payment_note = st.text_input(t("payment_note"), key=f"pay_note_{inv['id']}")
-                        save_payment = st.form_submit_button(
-                            t("record_payment"), use_container_width=True, type="primary"
+
+                        payment_note = st.text_input(
+                            t("payment_note"),
+                            key=f"pay_note_{inv['id']}",
+                        )
+
+                        save_payment = (
+                            st.form_submit_button(
+                                t("record_payment"),
+                                use_container_width=True,
+                                type="primary",
+                            )
                         )
 
                     if save_payment:
-                        amount_value = float(payment_amount)
-                        date_value = payment_date_value.strftime("%d-%m-%Y")
-                        note_value = payment_note.strip()
-                        signature = f"{inv['id']}|{amount_value:.2f}|{date_value}|{note_value}"
-                        now_ts = datetime.now().timestamp()
-                        last_sig = st.session_state.get("_last_payment_signature", "")
-                        last_ts = float(st.session_state.get("_last_payment_time", 0.0) or 0.0)
 
-                        if amount_value > balance + 0.005:
-                            st.error(t("payment_too_high"))
-                        elif signature == last_sig and (now_ts - last_ts) < 5:
-                            st.warning(t("payment_duplicate"))
+                        amount_value = float(
+                            payment_amount
+                        )
+
+                        date_value = (
+                            payment_date_value.strftime(
+                                "%d-%m-%Y"
+                            )
+                        )
+
+                        note_value = (
+                            payment_note.strip()
+                        )
+
+                        signature = (
+                            f"{inv['id']}|"
+                            f"{amount_value:.2f}|"
+                            f"{date_value}|"
+                            f"{note_value}"
+                        )
+
+                        now_ts = (
+                            datetime.now().timestamp()
+                        )
+
+                        last_sig = (
+                            st.session_state.get(
+                                "_last_payment_signature",
+                                "",
+                            )
+                        )
+
+                        last_ts = float(
+                            st.session_state.get(
+                                "_last_payment_time",
+                                0.0,
+                            )
+                            or 0.0
+                        )
+
+                        if (
+                            amount_value
+                            > balance + 0.005
+                        ):
+
+                            st.error(
+                                t("payment_too_high")
+                            )
+
+                        elif (
+                            signature == last_sig
+                            and
+                            (now_ts - last_ts) < 5
+                        ):
+
+                            st.warning(
+                                t("payment_duplicate")
+                            )
+
                         else:
+
                             with engine.begin() as con:
-                                con.execute(insert(payments_table).values(
-                                    user_id=USER_ID, invoice_id=int(inv["id"]), amount=amount_value,
-                                    payment_date=date_value, note=note_value, created_at=now_naive()
-                                ))
-                            st.session_state["_last_payment_signature"] = signature
-                            st.session_state["_last_payment_time"] = now_ts
-                            st.success(t("payment_saved"))
+
+                                con.execute(
+                                    insert(
+                                        payments_table
+                                    ).values(
+                                        user_id=USER_ID,
+                                        invoice_id=int(
+                                            inv["id"]
+                                        ),
+                                        amount=amount_value,
+                                        payment_date=date_value,
+                                        note=note_value,
+                                        created_at=now_naive(),
+                                    )
+                                )
+
+                            st.session_state[
+                                "_last_payment_signature"
+                            ] = signature
+
+                            st.session_state[
+                                "_last_payment_time"
+                            ] = now_ts
+
+                            st.success(
+                                t("payment_saved")
+                            )
+
                             st.rerun()
 
+                # ------------------------------------------------
+                # DOWNLOAD PDF
+                # ------------------------------------------------
+
                 st.download_button(
-                    t("download_pdf"), make_invoice_pdf(inv, current_user),
-                    f"{clean_filename(inv['invoice_number'])}.pdf", "application/pdf",
-                    key=f"hist_{inv['id']}", use_container_width=True,
+                    t("download_pdf"),
+                    make_invoice_pdf(
+                        inv,
+                        current_user,
+                    ),
+                    (
+                        f"{clean_filename(inv['invoice_number'])}"
+                        f".pdf"
+                    ),
+                    "application/pdf",
+                    key=f"hist_{inv['id']}",
+                    use_container_width=True,
                 )
+
+                whatsapp_url = make_whatsapp_invoice_url(
+                    inv,
+                    current_user,
+                )
+
+                st.link_button(
+                    "🟢 Share on WhatsApp",
+                    whatsapp_url,
+                    use_container_width=True,
+                )
+
+                st.markdown("---")
+
+                # =================================================
+                # EDIT INVOICE
+                # =================================================
+
+                with st.expander(
+                    f"✏️ {t('edit_record')}"
+                ):
+
+                    old_invoice_date = (
+                        parse_app_date(
+                            inv.get("invoice_date", "")
+                        )
+                        or date.today()
+                    )
+
+                    current_customer_state = (
+                        inv.get(
+                            "customer_state",
+                            "Maharashtra",
+                        )
+                        or "Maharashtra"
+                    )
+
+                    if (
+                        current_customer_state
+                        not in STATES
+                    ):
+                        current_customer_state = (
+                            "Maharashtra"
+                        )
+
+                    current_place_supply = (
+                        inv.get(
+                            "place_of_supply",
+                            current_customer_state,
+                        )
+                        or current_customer_state
+                    )
+
+                    if current_place_supply not in STATES:
+                        current_place_supply = (
+                            current_customer_state
+                        )
+
+                    st.caption(
+                        f"{t('invoice_number')}: "
+                        f"{inv['invoice_number']}"
+                    )
+
+                    with st.form(
+                        f"edit_invoice_form_{inv['id']}"
+                    ):
+
+                        edit_invoice_date = (
+                            st.date_input(
+                                t("invoice_date"),
+                                value=old_invoice_date,
+                                key=(
+                                    f"edit_inv_date_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        edit_customer_name = (
+                            st.text_input(
+                                t("customer_name"),
+                                value=str(
+                                    inv.get(
+                                        "customer_name",
+                                        "",
+                                    )
+                                ),
+                                key=(
+                                    f"edit_inv_name_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        edit_customer_address = (
+                            st.text_area(
+                                t("customer_address"),
+                                value=str(
+                                    inv.get(
+                                        "customer_address",
+                                        "",
+                                    )
+                                ),
+                                key=(
+                                    f"edit_inv_address_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        edit_customer_gstin = (
+                            st.text_input(
+                                t("customer_gstin"),
+                                value=str(
+                                    inv.get(
+                                        "customer_gstin",
+                                        "",
+                                    )
+                                ),
+                                key=(
+                                    f"edit_inv_gstin_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        edit_customer_state = (
+                            st.selectbox(
+                                t("customer_state"),
+                                STATES,
+                                index=STATES.index(
+                                    current_customer_state
+                                ),
+                                format_func=state_label,
+                                key=(
+                                    f"edit_inv_state_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        edit_place_supply = (
+                            st.selectbox(
+                                t("place_of_supply"),
+                                STATES,
+                                index=STATES.index(
+                                    current_place_supply
+                                ),
+                                format_func=state_label,
+                                key=(
+                                    f"edit_inv_supply_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        save_invoice_edit = (
+                            st.form_submit_button(
+                                f"💾 {t('save_changes')}",
+                                use_container_width=True,
+                                type="primary",
+                            )
+                        )
+
+                    if save_invoice_edit:
+
+                        if not edit_customer_name.strip():
+
+                            st.error(
+                                t("customer_required")
+                            )
+
+                        else:
+
+                            # ------------------------------------
+                            # Recalculate GST only if place of
+                            # supply changes.
+                            # Items / quantities are NOT changed.
+                            # ------------------------------------
+
+                            invoice_items = list(
+                                inv.get("items", [])
+                                or []
+                            )
+
+                            new_taxable = 0.0
+                            new_cgst = 0.0
+                            new_sgst = 0.0
+                            new_igst = 0.0
+
+                            new_intra = (
+                                current_user.get(
+                                    "company_state",
+                                    "Maharashtra",
+                                )
+                                == edit_place_supply
+                            )
+
+                            for item in invoice_items:
+
+                                qty = float(
+                                    item.get(
+                                        "qty",
+                                        0,
+                                    )
+                                    or 0
+                                )
+
+                                rate = float(
+                                    item.get(
+                                        "rate",
+                                        0,
+                                    )
+                                    or 0
+                                )
+
+                                gst_rate = float(
+                                    item.get(
+                                        "gst_rate",
+                                        0,
+                                    )
+                                    or 0
+                                )
+
+                                item_amount = (
+                                    qty * rate
+                                )
+
+                                new_taxable += (
+                                    item_amount
+                                )
+
+                                tax_amount = (
+                                    item_amount
+                                    * gst_rate
+                                    / 100.0
+                                )
+
+                                if new_intra:
+
+                                    new_cgst += (
+                                        tax_amount / 2
+                                    )
+
+                                    new_sgst += (
+                                        tax_amount / 2
+                                    )
+
+                                else:
+
+                                    new_igst += (
+                                        tax_amount
+                                    )
+
+                            new_grand_total = (
+                                new_taxable
+                                + new_cgst
+                                + new_sgst
+                                + new_igst
+                            )
+
+                            # Do not allow edited invoice total
+                            # below already received payment.
+                            if (
+                                new_grand_total
+                                + 0.005
+                                < paid_amount
+                            ):
+
+                                st.error(
+                                    t("invoice_paid_total_error")
+                                )
+
+                            else:
+
+                                old_data = {
+                                    "invoice_number":
+                                        inv.get(
+                                            "invoice_number",
+                                            "",
+                                        ),
+                                    "invoice_date":
+                                        inv.get(
+                                            "invoice_date",
+                                            "",
+                                        ),
+                                    "customer_name":
+                                        inv.get(
+                                            "customer_name",
+                                            "",
+                                        ),
+                                    "customer_address":
+                                        inv.get(
+                                            "customer_address",
+                                            "",
+                                        ),
+                                    "customer_gstin":
+                                        inv.get(
+                                            "customer_gstin",
+                                            "",
+                                        ),
+                                    "customer_state":
+                                        inv.get(
+                                            "customer_state",
+                                            "",
+                                        ),
+                                    "place_of_supply":
+                                        inv.get(
+                                            "place_of_supply",
+                                            "",
+                                        ),
+                                    "taxable_value":
+                                        float(
+                                            inv.get(
+                                                "taxable_value",
+                                                0,
+                                            )
+                                            or 0
+                                        ),
+                                    "cgst":
+                                        float(
+                                            inv.get(
+                                                "cgst",
+                                                0,
+                                            )
+                                            or 0
+                                        ),
+                                    "sgst":
+                                        float(
+                                            inv.get(
+                                                "sgst",
+                                                0,
+                                            )
+                                            or 0
+                                        ),
+                                    "igst":
+                                        float(
+                                            inv.get(
+                                                "igst",
+                                                0,
+                                            )
+                                            or 0
+                                        ),
+                                    "grand_total":
+                                        float(
+                                            inv.get(
+                                                "grand_total",
+                                                0,
+                                            )
+                                            or 0
+                                        ),
+                                }
+
+                                new_data = {
+                                    "invoice_number":
+                                        inv.get(
+                                            "invoice_number",
+                                            "",
+                                        ),
+                                    "invoice_date":
+                                        edit_invoice_date.strftime(
+                                            "%d-%m-%Y"
+                                        ),
+                                    "customer_name":
+                                        edit_customer_name.strip(),
+                                    "customer_address":
+                                        edit_customer_address.strip(),
+                                    "customer_gstin":
+                                        edit_customer_gstin.strip(),
+                                    "customer_state":
+                                        edit_customer_state,
+                                    "place_of_supply":
+                                        edit_place_supply,
+                                    "taxable_value":
+                                        float(
+                                            new_taxable
+                                        ),
+                                    "cgst":
+                                        float(
+                                            new_cgst
+                                        ),
+                                    "sgst":
+                                        float(
+                                            new_sgst
+                                        ),
+                                    "igst":
+                                        float(
+                                            new_igst
+                                        ),
+                                    "grand_total":
+                                        float(
+                                            new_grand_total
+                                        ),
+                                }
+
+                                with engine.begin() as con:
+
+                                    con.execute(
+                                        update(
+                                            invoices_table
+                                        )
+                                        .where(
+                                            invoices_table.c.id
+                                            == int(
+                                                inv["id"]
+                                            ),
+                                            invoices_table.c.user_id
+                                            == USER_ID,
+                                        )
+                                        .values(
+                                            invoice_date=(
+                                                edit_invoice_date.strftime(
+                                                    "%d-%m-%Y"
+                                                )
+                                            ),
+                                            customer_name=(
+                                                edit_customer_name.strip()
+                                            ),
+                                            customer_address=(
+                                                edit_customer_address.strip()
+                                            ),
+                                            customer_gstin=(
+                                                edit_customer_gstin.strip()
+                                            ),
+                                            customer_state=(
+                                                edit_customer_state
+                                            ),
+                                            place_of_supply=(
+                                                edit_place_supply
+                                            ),
+                                            taxable_value=(
+                                                float(
+                                                    new_taxable
+                                                )
+                                            ),
+                                            cgst=float(
+                                                new_cgst
+                                            ),
+                                            sgst=float(
+                                                new_sgst
+                                            ),
+                                            igst=float(
+                                                new_igst
+                                            ),
+                                            grand_total=float(
+                                                new_grand_total
+                                            ),
+                                            is_intra_state=(
+                                                new_intra
+                                            ),
+                                        )
+                                    )
+
+                                    log_change(
+                                        con,
+                                        user_id=USER_ID,
+                                        record_type="INVOICE",
+                                        record_id=int(
+                                            inv["id"]
+                                        ),
+                                        record_number=str(
+                                            inv.get(
+                                                "invoice_number",
+                                                "",
+                                            )
+                                        ),
+                                        action="EDIT",
+                                        old_data=old_data,
+                                        new_data=new_data,
+                                    )
+
+                                st.success(
+                                    t("invoice_updated")
+                                )
+
+                                st.rerun()
+
+                # =================================================
+                # DELETE INVOICE
+                # =================================================
+
+                with st.expander(
+                    f"🗑️ {t('delete_record')}"
+                ):
+
+                    related_sales_returns = [
+                        r
+                        for r in globals().get(
+                            "sales_returns",
+                            [],
+                        )
+                        if int(
+                            r.get(
+                                "original_invoice_id",
+                                0,
+                            )
+                            or 0
+                        )
+                        == int(inv["id"])
+                    ]
+
+                    if related_sales_returns:
+
+                        st.warning(
+                            t("invoice_has_sales_return")
+                        )
+
+                    else:
+
+                        confirm_invoice_delete = (
+                            st.checkbox(
+                                t("confirm_delete"),
+                                key=(
+                                    f"confirm_invoice_delete_"
+                                    f"{inv['id']}"
+                                ),
+                            )
+                        )
+
+                        if st.button(
+                            f"🗑️ {t('delete_record')}",
+                            key=(
+                                f"delete_invoice_"
+                                f"{inv['id']}"
+                            ),
+                            use_container_width=True,
+                            disabled=(
+                                not confirm_invoice_delete
+                            ),
+                        ):
+
+                            delete_old_data = {
+                                "invoice_number":
+                                    inv.get(
+                                        "invoice_number",
+                                        "",
+                                    ),
+                                "invoice_date":
+                                    inv.get(
+                                        "invoice_date",
+                                        "",
+                                    ),
+                                "customer_name":
+                                    inv.get(
+                                        "customer_name",
+                                        "",
+                                    ),
+                                "customer_address":
+                                    inv.get(
+                                        "customer_address",
+                                        "",
+                                    ),
+                                "customer_gstin":
+                                    inv.get(
+                                        "customer_gstin",
+                                        "",
+                                    ),
+                                "customer_state":
+                                    inv.get(
+                                        "customer_state",
+                                        "",
+                                    ),
+                                "place_of_supply":
+                                    inv.get(
+                                        "place_of_supply",
+                                        "",
+                                    ),
+                                "taxable_value":
+                                    float(
+                                        inv.get(
+                                            "taxable_value",
+                                            0,
+                                        )
+                                        or 0
+                                    ),
+                                "cgst":
+                                    float(
+                                        inv.get(
+                                            "cgst",
+                                            0,
+                                        )
+                                        or 0
+                                    ),
+                                "sgst":
+                                    float(
+                                        inv.get(
+                                            "sgst",
+                                            0,
+                                        )
+                                        or 0
+                                    ),
+                                "igst":
+                                    float(
+                                        inv.get(
+                                            "igst",
+                                            0,
+                                        )
+                                        or 0
+                                    ),
+                                "grand_total":
+                                    float(
+                                        inv.get(
+                                            "grand_total",
+                                            0,
+                                        )
+                                        or 0
+                                    ),
+                                "items":
+                                    list(
+                                        inv.get(
+                                            "items",
+                                            [],
+                                        )
+                                        or []
+                                    ),
+                                "paid_amount":
+                                    float(
+                                        paid_amount
+                                    ),
+                            }
+
+                            try:
+
+                                with engine.begin() as con:
+
+                                    # -----------------------------
+                                    # Return sold stock
+                                    # -----------------------------
+
+                                    for item in (
+                                        inv.get(
+                                            "items",
+                                            [],
+                                        )
+                                        or []
+                                    ):
+
+                                        product_id = (
+                                            item.get(
+                                                "product_id"
+                                            )
+                                        )
+
+                                        track_stock = bool(
+                                            item.get(
+                                                "track_stock"
+                                            )
+                                        )
+
+                                        qty = float(
+                                            item.get(
+                                                "qty",
+                                                0,
+                                            )
+                                            or 0
+                                        )
+
+                                        if (
+                                            product_id
+                                            and
+                                            track_stock
+                                            and
+                                            qty > 0
+                                        ):
+
+                                            change_stock(
+                                                con,
+                                                USER_ID,
+                                                int(
+                                                    product_id
+                                                ),
+                                                qty,
+                                                "INVOICE_DELETE",
+                                                "INVOICE",
+                                                int(
+                                                    inv["id"]
+                                                ),
+                                                str(
+                                                    inv.get(
+                                                        "invoice_number",
+                                                        "",
+                                                    )
+                                                ),
+                                                (
+                                                    "Stock returned "
+                                                    "because invoice "
+                                                    "was deleted"
+                                                ),
+                                            )
+
+                                    # -----------------------------
+                                    # Log delete BEFORE deleting
+                                    # invoice
+                                    # -----------------------------
+
+                                    log_change(
+                                        con,
+                                        user_id=USER_ID,
+                                        record_type="INVOICE",
+                                        record_id=int(
+                                            inv["id"]
+                                        ),
+                                        record_number=str(
+                                            inv.get(
+                                                "invoice_number",
+                                                "",
+                                            )
+                                        ),
+                                        action="DELETE",
+                                        old_data=(
+                                            delete_old_data
+                                        ),
+                                        new_data={},
+                                    )
+
+                                    # -----------------------------
+                                    # Delete payments first
+                                    # -----------------------------
+
+                                    con.execute(
+                                        delete(
+                                            payments_table
+                                        ).where(
+                                            payments_table.c.user_id
+                                            == USER_ID,
+                                            payments_table.c.invoice_id
+                                            == int(
+                                                inv["id"]
+                                            ),
+                                        )
+                                    )
+
+                                    # -----------------------------
+                                    # Delete invoice
+                                    # -----------------------------
+
+                                    con.execute(
+                                        delete(
+                                            invoices_table
+                                        ).where(
+                                            invoices_table.c.id
+                                            == int(
+                                                inv["id"]
+                                            ),
+                                            invoices_table.c.user_id
+                                            == USER_ID,
+                                        )
+                                    )
+
+                                st.success(
+                                    t("invoice_deleted")
+                                )
+
+                                st.rerun()
+
+                            except Exception as exc:
+
+                                st.error(
+                                    f"{t('invoice_delete_failed')}: {exc}"
+                                )
+
+
+# ============================================================
+# PURCHASE HISTORY
+# ============================================================
 
 # ============================================================
 # PURCHASE HISTORY
@@ -2352,6 +6090,1282 @@ elif menu == "purchase_history":
                     st.caption(
                         f"{item.get('desc','')} — {float(item.get('qty',0)):g} × {money(item.get('rate',0))}"
                     )
+                    # ============================================================
+# SALES RETURN
+# ============================================================
+elif menu == "sales_return":
+    st.title(f"↩️ {t('sales_return')}")
+
+    if not invoices:
+        st.info(t("no_invoices"))
+    else:
+        invoice_map = {
+            f"{inv.get('invoice_number','')} | {inv.get('customer_name','')} | {money(inv.get('grand_total',0))}": inv
+            for inv in invoices
+        }
+
+        selected_label = st.selectbox(
+            t("invoice_number"),
+            list(invoice_map.keys()),
+            key="sales_return_invoice",
+        )
+
+        selected_invoice = invoice_map[selected_label]
+        selected_invoice_id = int(selected_invoice["id"])
+
+        st.write(f"**{t('customer_name')}:** {selected_invoice.get('customer_name','')}")
+        st.write(f"**{t('date')}:** {selected_invoice.get('invoice_date','')}")
+        st.write(f"**{t('grand_total')}:** {money(selected_invoice.get('grand_total',0))}")
+
+        st.markdown("---")
+
+        return_date = st.date_input(
+            t("date"),
+            value=date.today(),
+            key="sales_return_date",
+        )
+
+        reason = st.text_input(
+            t("reason"),
+            key="sales_return_reason",
+        )
+
+        previous_returns = [
+            r for r in sales_returns
+            if int(r.get("original_invoice_id", 0) or 0) == selected_invoice_id
+        ]
+
+        return_items = []
+
+        for idx, item in enumerate(selected_invoice.get("items", [])):
+            desc = item.get("desc", "")
+            sold_qty = float(item.get("qty", 0) or 0)
+            rate = float(item.get("rate", 0) or 0)
+            gst_rate = float(item.get("gst_rate", 0) or 0)
+            product_id = item.get("product_id")
+
+            already_returned = 0.0
+
+            for old_return in previous_returns:
+                for old_item in old_return.get("items", []):
+                    old_product_id = old_item.get("product_id")
+                    old_desc = str(old_item.get("desc", "")).strip().lower()
+                    old_rate = float(old_item.get("rate", 0) or 0)
+                    old_gst_rate = float(old_item.get("gst_rate", 0) or 0)
+
+                    same_product = (
+                        product_id is not None
+                        and old_product_id is not None
+                        and str(product_id) == str(old_product_id)
+                        and old_desc == str(desc).strip().lower()
+                        and abs(old_rate - rate) < 0.0001
+                        and abs(old_gst_rate - gst_rate) < 0.0001
+                    )
+
+                    same_non_product_item = (
+                        product_id is None
+                        and old_product_id is None
+                        and old_desc == str(desc).strip().lower()
+                        and abs(old_rate - rate) < 0.0001
+                        and abs(old_gst_rate - gst_rate) < 0.0001
+                    )
+
+                    if same_product or same_non_product_item:
+                        already_returned += float(old_item.get("qty", 0) or 0)
+
+            remaining_qty = max(0.0, sold_qty - already_returned)
+
+            st.write(f"**{desc}**")
+            st.caption(
+                f"{t('quantity')}: {sold_qty:g}  |  ↩ {already_returned:g}  |  ✓ {remaining_qty:g}"
+            )
+
+            qty_return = st.number_input(
+                f"{t('quantity')} - {desc}",
+                min_value=0.0,
+                max_value=float(remaining_qty),
+                value=0.0,
+                step=1.0,
+                key=f"sales_return_qty_{selected_invoice['id']}_{idx}",
+                disabled=remaining_qty <= 0,
+            )
+
+            if qty_return > 0:
+                return_items.append({
+                    "product_id": product_id,
+                    "track_stock": item.get("track_stock", False),
+                    "desc": desc,
+                    "hsn": item.get("hsn", ""),
+                    "qty": float(qty_return),
+                    "rate": rate,
+                    "gst_rate": gst_rate,
+                    "amount": float(qty_return) * rate,
+                })
+
+        st.markdown("---")
+
+        if st.button(
+            t("sales_return"),
+            use_container_width=True,
+            type="primary",
+            key="save_sales_return",
+        ):
+            if not return_items:
+                st.warning(t("return_quantity_required"))
+            else:
+                return_signature = json.dumps(
+                    {
+                        "invoice_id": selected_invoice_id,
+                        "return_date": return_date.strftime("%d-%m-%Y"),
+                        "reason": reason.strip(),
+                        "items": [
+                            {
+                                "product_id": x.get("product_id"),
+                                "desc": x.get("desc", ""),
+                                "qty": float(x.get("qty", 0) or 0),
+                                "rate": float(x.get("rate", 0) or 0),
+                            }
+                            for x in return_items
+                        ],
+                    },
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+
+                now_ts = datetime.now().timestamp()
+                last_signature = st.session_state.get("_last_sales_return_signature")
+                last_time = float(
+                    st.session_state.get("_last_sales_return_time", 0.0) or 0.0
+                )
+
+                if (
+                    last_signature == return_signature
+                    and (now_ts - last_time) < 5
+                ):
+                    st.warning(
+                        t("return_recently_saved")
+                    )
+                else:
+                    taxable = sum(x["amount"] for x in return_items)
+
+                    intra = bool(
+                        selected_invoice.get("is_intra_state", True)
+                    )
+                    cgst = sgst = igst = 0.0
+
+                    for x in return_items:
+                        tax = x["amount"] * x["gst_rate"] / 100.0
+
+                        if intra:
+                            cgst += tax / 2.0
+                            sgst += tax / 2.0
+                        else:
+                            igst += tax
+
+                    grand = taxable + cgst + sgst + igst
+
+                    existing_numbers = {
+                        str(r.get("return_number", ""))
+                        for r in sales_returns
+                    }
+
+                    seq = len(sales_returns) + 1
+
+                    while True:
+                        return_number = (
+                            f"SR-{selected_invoice.get('invoice_number','')}-{seq}"
+                        )
+
+                        if return_number not in existing_numbers:
+                            break
+
+                        seq += 1
+
+                    try:
+                        with engine.begin() as con:
+                            result = con.execute(
+                                insert(sales_returns_table).values(
+                                    user_id=USER_ID,
+                                    original_invoice_id=selected_invoice_id,
+                                    original_invoice_number=selected_invoice.get(
+                                        "invoice_number", ""
+                                    ),
+                                    return_number=return_number,
+                                    return_date=return_date.strftime("%d-%m-%Y"),
+                                    customer_name=selected_invoice.get(
+                                        "customer_name", ""
+                                    ),
+                                    reason=reason.strip(),
+                                    items_json=json.dumps(
+                                        return_items,
+                                        ensure_ascii=False,
+                                    ),
+                                    taxable_value=taxable,
+                                    cgst=cgst,
+                                    sgst=sgst,
+                                    igst=igst,
+                                    grand_total=grand,
+                                    created_at=now_naive(),
+                                )
+                            )
+
+                            return_id = int(
+                                result.inserted_primary_key[0]
+                            )
+
+                            for item in return_items:
+                                if (
+                                    item.get("product_id")
+                                    and item.get("track_stock")
+                                ):
+                                    change_stock(
+                                        con,
+                                        USER_ID,
+                                        int(item["product_id"]),
+                                        float(item["qty"]),
+                                        "SALES_RETURN",
+                                        "SALES_RETURN",
+                                        return_id,
+                                        return_number,
+                                        f"Sales Return: {item.get('desc','')}",
+                                    )
+
+                        st.session_state[
+                            "_last_sales_return_signature"
+                        ] = return_signature
+
+                        st.session_state[
+                            "_last_sales_return_time"
+                        ] = datetime.now().timestamp()
+
+                        st.success(
+                            f"{t('sales_return_saved')}: {return_number}"
+                        )
+                        st.rerun()
+
+                    except IntegrityError:
+                        st.error(
+                            t("sales_return_exists")
+                        )
+
+# ============================================================
+# PURCHASE RETURN
+# ============================================================
+elif menu == "purchase_return":
+    st.title(f"🔄 {t('purchase_return')}")
+
+    if not purchases:
+        st.info(t("no_purchases"))
+    else:
+        purchase_map = {
+            f"{pur.get('bill_number','')} | {pur.get('supplier_name','')} | {money(pur.get('grand_total',0))}": pur
+            for pur in purchases
+        }
+
+        selected_purchase_label = st.selectbox(
+            t("supplier_bill_number"),
+            list(purchase_map.keys()),
+            key="purchase_return_purchase",
+        )
+
+        selected_purchase = purchase_map[selected_purchase_label]
+        selected_purchase_id = int(selected_purchase["id"])
+
+        st.write(
+            f"**{t('supplier_name')}:** "
+            f"{selected_purchase.get('supplier_name','')}"
+        )
+        st.write(
+            f"**{t('purchase_date')}:** "
+            f"{selected_purchase.get('purchase_date','')}"
+        )
+        st.write(
+            f"**{t('grand_total')}:** "
+            f"{money(selected_purchase.get('grand_total',0))}"
+        )
+
+        st.markdown("---")
+
+        return_date = st.date_input(
+            t("date"),
+            value=date.today(),
+            key="purchase_return_date",
+        )
+
+        reason = st.text_input(
+            t("reason"),
+            key="purchase_return_reason",
+        )
+
+        previous_purchase_returns = [
+            r for r in purchase_returns
+            if int(r.get("original_purchase_id", 0) or 0)
+            == selected_purchase_id
+        ]
+
+        return_items = []
+
+        for idx, item in enumerate(selected_purchase.get("items", [])):
+            desc = item.get("desc", "")
+            purchased_qty = float(item.get("qty", 0) or 0)
+            rate = float(item.get("rate", 0) or 0)
+            gst_rate = float(item.get("gst_rate", 0) or 0)
+            product_id = item.get("product_id")
+
+            already_returned = 0.0
+
+            for old_return in previous_purchase_returns:
+                for old_item in old_return.get("items", []):
+                    old_product_id = old_item.get("product_id")
+                    old_desc = str(
+                        old_item.get("desc", "")
+                    ).strip().lower()
+                    old_rate = float(
+                        old_item.get("rate", 0) or 0
+                    )
+                    old_gst_rate = float(
+                        old_item.get("gst_rate", 0) or 0
+                    )
+
+                    same_product = (
+                        product_id is not None
+                        and old_product_id is not None
+                        and str(product_id) == str(old_product_id)
+                        and old_desc == str(desc).strip().lower()
+                        and abs(old_rate - rate) < 0.0001
+                        and abs(old_gst_rate - gst_rate) < 0.0001
+                    )
+
+                    same_non_product_item = (
+                        product_id is None
+                        and old_product_id is None
+                        and old_desc == str(desc).strip().lower()
+                        and abs(old_rate - rate) < 0.0001
+                        and abs(old_gst_rate - gst_rate) < 0.0001
+                    )
+
+                    if same_product or same_non_product_item:
+                        already_returned += float(
+                            old_item.get("qty", 0) or 0
+                        )
+
+            remaining_qty = max(
+                0.0,
+                purchased_qty - already_returned,
+            )
+
+            available_stock = remaining_qty
+
+            if product_id is not None:
+                try:
+                    available_stock = float(
+                        INV_MAP.get(
+                            int(product_id),
+                            {},
+                        ).get("current_stock", 0) or 0
+                    )
+                except Exception:
+                    available_stock = 0.0
+
+            max_return_qty = min(
+                remaining_qty,
+                max(0.0, available_stock),
+            )
+
+            st.write(f"**{desc}**")
+            st.caption(
+                f"{t('quantity')}: {purchased_qty:g}"
+                f"  |  ↩ {already_returned:g}"
+                f"  |  ✓ {remaining_qty:g}"
+                f"  |  📦 {t('current_stock')}: {available_stock:g}"
+            )
+
+            qty_return = st.number_input(
+                f"{t('quantity')} - {desc}",
+                min_value=0.0,
+                max_value=float(max_return_qty),
+                value=0.0,
+                step=1.0,
+                key=(
+                    f"purchase_return_qty_"
+                    f"{selected_purchase['id']}_{idx}"
+                ),
+                disabled=max_return_qty <= 0,
+            )
+
+            if qty_return > 0:
+                return_items.append({
+                    "product_id": product_id,
+                    "desc": desc,
+                    "hsn": item.get("hsn", ""),
+                    "qty": float(qty_return),
+                    "rate": rate,
+                    "gst_rate": gst_rate,
+                    "amount": float(qty_return) * rate,
+                })
+
+        st.markdown("---")
+
+        if st.button(
+            t("purchase_return"),
+            use_container_width=True,
+            type="primary",
+            key="save_purchase_return",
+        ):
+            if not return_items:
+                st.warning(t("return_quantity_required"))
+            else:
+                return_signature = json.dumps(
+                    {
+                        "purchase_id": selected_purchase_id,
+                        "return_date": return_date.strftime(
+                            "%d-%m-%Y"
+                        ),
+                        "reason": reason.strip(),
+                        "items": [
+                            {
+                                "product_id": x.get("product_id"),
+                                "desc": x.get("desc", ""),
+                                "qty": float(
+                                    x.get("qty", 0) or 0
+                                ),
+                                "rate": float(
+                                    x.get("rate", 0) or 0
+                                ),
+                            }
+                            for x in return_items
+                        ],
+                    },
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+
+                now_ts = datetime.now().timestamp()
+                last_signature = st.session_state.get(
+                    "_last_purchase_return_signature"
+                )
+                last_time = float(
+                    st.session_state.get(
+                        "_last_purchase_return_time",
+                        0.0,
+                    ) or 0.0
+                )
+
+                if (
+                    last_signature == return_signature
+                    and (now_ts - last_time) < 5
+                ):
+                    st.warning(t("return_recently_saved"))
+                else:
+                    taxable = sum(
+                        x["amount"] for x in return_items
+                    )
+
+                    intra = bool(
+                        selected_purchase.get(
+                            "is_intra_state",
+                            True,
+                        )
+                    )
+
+                    cgst = sgst = igst = 0.0
+
+                    for x in return_items:
+                        tax = (
+                            x["amount"]
+                            * x["gst_rate"]
+                            / 100.0
+                        )
+
+                        if intra:
+                            cgst += tax / 2.0
+                            sgst += tax / 2.0
+                        else:
+                            igst += tax
+
+                    grand = taxable + cgst + sgst + igst
+
+                    existing_numbers = {
+                        str(r.get("return_number", ""))
+                        for r in purchase_returns
+                    }
+
+                    seq = len(purchase_returns) + 1
+                    while True:
+                        return_number = (
+                            f"PR-"
+                            f"{selected_purchase.get('bill_number', '')}-"
+                            f"{seq}"
+                        )
+
+                        if return_number not in existing_numbers:
+                            break
+
+                        seq += 1
+
+                    try:
+                        with engine.begin() as con:
+                            result = con.execute(
+                                insert(
+                                    purchase_returns_table
+                                ).values(
+                                    user_id=USER_ID,
+                                    original_purchase_id=(
+                                        selected_purchase_id
+                                    ),
+                                    original_bill_number=(
+                                        selected_purchase.get(
+                                            "bill_number",
+                                            "",
+                                        )
+                                    ),
+                                    return_number=return_number,
+                                    return_date=(
+                                        return_date.strftime(
+                                            "%d-%m-%Y"
+                                        )
+                                    ),
+                                    supplier_name=(
+                                        selected_purchase.get(
+                                            "supplier_name",
+                                            "",
+                                        )
+                                    ),
+                                    reason=reason.strip(),
+                                    items_json=json.dumps(
+                                        return_items,
+                                        ensure_ascii=False,
+                                    ),
+                                    taxable_value=taxable,
+                                    cgst=cgst,
+                                    sgst=sgst,
+                                    igst=igst,
+                                    grand_total=grand,
+                                    created_at=now_naive(),
+                                )
+                            )
+
+                            return_id = int(
+                                result.inserted_primary_key[0]
+                            )
+
+                            for item in return_items:
+                                if item.get("product_id"):
+                                    change_stock(
+                                        con,
+                                        USER_ID,
+                                        int(item["product_id"]),
+                                        -float(item["qty"]),
+                                        "PURCHASE_RETURN",
+                                        "PURCHASE_RETURN",
+                                        return_id,
+                                        return_number,
+                                        (
+                                            f"{t('purchase_return')}: "
+                                            f"{item.get('desc','')}"
+                                        ),
+                                    )
+
+                        st.session_state[
+                            "_last_purchase_return_signature"
+                        ] = return_signature
+
+                        st.session_state[
+                            "_last_purchase_return_time"
+                        ] = datetime.now().timestamp()
+
+                        st.success(
+                            f"{t('purchase_return_saved')}: "
+                            f"{return_number}"
+                        )
+                        st.rerun()
+
+                    except IntegrityError:
+                        st.error(
+                            t("purchase_return_exists")
+                        )
+
+                    except ValueError as exc:
+                        if str(exc) == "INSUFFICIENT_STOCK":
+                            st.error(t("insufficient_stock"))
+                        else:
+                            raise
+                        # ============================================================
+# EXPENSES - ADD + EDIT + DELETE + HISTORY
+# ============================================================
+elif menu == "expenses":
+    st.title(f"💸 {t('expenses')}")
+
+    expense_date = st.date_input(
+        t("expense_date"),
+        value=date.today(),
+        key="expense_date_input",
+    )
+
+    expense_category = st.text_input(
+        t("expense_category"),
+        key="expense_category_input",
+    )
+
+    expense_amount = st.number_input(
+        t("expense_amount"),
+        min_value=0.0,
+        value=0.0,
+        step=1.0,
+        key="expense_amount_input",
+    )
+
+    expense_note = st.text_area(
+        t("expense_note"),
+        key="expense_note_input",
+    )
+
+    if st.button(
+        f"💾 {t('save_expense')}",
+        type="primary",
+        use_container_width=True,
+        key="save_expense_button",
+    ):
+        if float(expense_amount) <= 0:
+            st.warning(t("expense_amount_required"))
+
+        else:
+            with engine.begin() as con:
+                con.execute(
+                    insert(expenses_table).values(
+                        user_id=USER_ID,
+                        expense_date=expense_date.strftime("%d-%m-%Y"),
+                        category=expense_category.strip(),
+                        amount=float(expense_amount),
+                        note=expense_note.strip(),
+                        created_at=now_naive(),
+                    )
+                )
+
+            st.success(t("expense_saved"))
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader(f"📋 {t('expense_history')}")
+
+    with engine.connect() as con:
+        expense_rows = [
+            row_dict(r)
+            for r in con.execute(
+                select(expenses_table)
+                .where(
+                    expenses_table.c.user_id == USER_ID
+                )
+                .order_by(
+                    expenses_table.c.id.desc()
+                )
+            ).all()
+        ]
+
+    if not expense_rows:
+        st.info(t("no_expenses"))
+
+    else:
+        for exp in expense_rows:
+
+            exp_id = int(exp["id"])
+
+            category_text = (
+                exp.get("category", "")
+                or "-"
+            )
+
+            note_text = (
+                exp.get("note", "")
+                or "-"
+            )
+
+            amount_value = float(
+                exp.get("amount", 0)
+                or 0
+            )
+
+            with st.expander(
+                f"{exp.get('expense_date', '')} | "
+                f"{category_text} | "
+                f"{money(amount_value)}"
+            ):
+
+                st.write(
+                    f"**{t('expense_date')}:** "
+                    f"{exp.get('expense_date', '')}"
+                )
+
+                st.write(
+                    f"**{t('expense_category')}:** "
+                    f"{category_text}"
+                )
+
+                st.write(
+                    f"**{t('expense_amount')}:** "
+                    f"{money(amount_value)}"
+                )
+
+                st.write(
+                    f"**{t('expense_note')}:** "
+                    f"{note_text}"
+                )
+
+                st.markdown("---")
+
+                # --------------------------------------------
+                # EDIT EXPENSE
+                # --------------------------------------------
+                with st.expander(
+                    f"✏️ {t('edit_record')}"
+                ):
+                    old_expense_date = parse_app_date(
+                        exp.get("expense_date")
+                    )
+
+                    if old_expense_date is None:
+                        old_expense_date = date.today()
+
+                    with st.form(
+                        f"edit_expense_form_{exp_id}"
+                    ):
+                        edit_date = st.date_input(
+                            t("expense_date"),
+                            value=old_expense_date,
+                            key=f"edit_expense_date_{exp_id}",
+                        )
+
+                        edit_category = st.text_input(
+                            t("expense_category"),
+                            value=exp.get(
+                                "category",
+                                "",
+                            )
+                            or "",
+                            key=f"edit_expense_category_{exp_id}",
+                        )
+
+                        edit_amount = st.number_input(
+                            t("expense_amount"),
+                            min_value=0.01,
+                            value=float(
+                                exp.get(
+                                    "amount",
+                                    0,
+                                )
+                                or 0
+                            ),
+                            step=1.0,
+                            key=f"edit_expense_amount_{exp_id}",
+                        )
+
+                        edit_note = st.text_area(
+                            t("expense_note"),
+                            value=exp.get(
+                                "note",
+                                "",
+                            )
+                            or "",
+                            key=f"edit_expense_note_{exp_id}",
+                        )
+
+                        save_edit = st.form_submit_button(
+                            f"💾 {t('edit_record')}",
+                            use_container_width=True,
+                            type="primary",
+                        )
+
+                    if save_edit:
+
+                        old_data = {
+                            "expense_date": exp.get(
+                                "expense_date",
+                                "",
+                            ),
+                            "category": exp.get(
+                                "category",
+                                "",
+                            ),
+                            "amount": float(
+                                exp.get(
+                                    "amount",
+                                    0,
+                                )
+                                or 0
+                            ),
+                            "note": exp.get(
+                                "note",
+                                "",
+                            ),
+                        }
+
+                        new_data = {
+                            "expense_date": edit_date.strftime(
+                                "%d-%m-%Y"
+                            ),
+                            "category": edit_category.strip(),
+                            "amount": float(
+                                edit_amount
+                            ),
+                            "note": edit_note.strip(),
+                        }
+
+                        with engine.begin() as con:
+
+                            con.execute(
+                                update(expenses_table)
+                                .where(
+                                    expenses_table.c.id
+                                    == exp_id,
+                                    expenses_table.c.user_id
+                                    == USER_ID,
+                                )
+                                .values(
+                                    expense_date=new_data[
+                                        "expense_date"
+                                    ],
+                                    category=new_data[
+                                        "category"
+                                    ],
+                                    amount=new_data[
+                                        "amount"
+                                    ],
+                                    note=new_data[
+                                        "note"
+                                    ],
+                                )
+                            )
+
+                            log_change(
+                                con=con,
+                                user_id=USER_ID,
+                                record_type="EXPENSE",
+                                record_id=exp_id,
+                                record_number=(
+                                    f"EXP-{exp_id}"
+                                ),
+                                action="EDIT",
+                                old_data=old_data,
+                                new_data=new_data,
+                            )
+
+                        st.success(
+                            t("expense_updated")
+                        )
+
+                        st.rerun()
+
+                # --------------------------------------------
+                # DELETE EXPENSE
+                # --------------------------------------------
+                with st.expander(
+                    f"🗑️ {t('delete_record')}"
+                ):
+
+                    confirm_delete = st.checkbox(
+                        t("confirm_delete"),
+                        key=(
+                            f"confirm_delete_expense_"
+                            f"{exp_id}"
+                        ),
+                    )
+
+                    if st.button(
+                        f"🗑️ {t('delete_record')}",
+                        key=(
+                            f"delete_expense_"
+                            f"{exp_id}"
+                        ),
+                        use_container_width=True,
+                    ):
+
+                        if not confirm_delete:
+                            st.warning(
+                                t("confirm_delete")
+                            )
+
+                        else:
+                            old_data = {
+                                "expense_date": exp.get(
+                                    "expense_date",
+                                    "",
+                                ),
+                                "category": exp.get(
+                                    "category",
+                                    "",
+                                ),
+                                "amount": float(
+                                    exp.get(
+                                        "amount",
+                                        0,
+                                    )
+                                    or 0
+                                ),
+                                "note": exp.get(
+                                    "note",
+                                    "",
+                                ),
+                            }
+
+                            with engine.begin() as con:
+
+                                log_change(
+                                    con=con,
+                                    user_id=USER_ID,
+                                    record_type="EXPENSE",
+                                    record_id=exp_id,
+                                    record_number=(
+                                        f"EXP-{exp_id}"
+                                    ),
+                                    action="DELETE",
+                                    old_data=old_data,
+                                    new_data={},
+                                )
+
+                                con.execute(
+                                    delete(
+                                        expenses_table
+                                    ).where(
+                                        expenses_table.c.id
+                                        == exp_id,
+                                        expenses_table.c.user_id
+                                        == USER_ID,
+                                    )
+                                )
+
+                            st.success(
+                                t("expense_deleted")
+                            )
+
+                            st.rerun()
+                            # ============================================================
+# EDIT / DELETE HISTORY
+# ============================================================
+elif menu == "edit_delete_history":
+    st.title(
+        f"📝 {t('edit_delete_history')}"
+    )
+
+    history_rows = get_change_history(
+        USER_ID
+    )
+
+    total_changes = len(
+        history_rows
+    )
+
+    edit_count = sum(
+        1
+        for row in history_rows
+        if row.get("action") == "EDIT"
+    )
+
+    delete_count = sum(
+        1
+        for row in history_rows
+        if row.get("action") == "DELETE"
+    )
+
+    h1, h2, h3 = st.columns(3)
+
+    h1.metric(
+        t("change_history"),
+        total_changes,
+    )
+
+    h2.metric(
+        t("edited"),
+        edit_count,
+    )
+
+    h3.metric(
+        t("deleted"),
+        delete_count,
+    )
+
+    st.markdown("---")
+
+    if not history_rows:
+        st.info(
+            t("no_change_history")
+        )
+
+    else:
+        history_search = st.text_input(
+            f"🔎 {t('search')}",
+            key="change_history_search",
+        ).strip().lower()
+
+        visible_history = []
+
+        for row in history_rows:
+            search_value = (
+                f"{row.get('record_type', '')} "
+                f"{row.get('record_number', '')} "
+                f"{row.get('action', '')}"
+            ).lower()
+
+            if (
+                not history_search
+                or history_search
+                in search_value
+            ):
+                visible_history.append(
+                    row
+                )
+
+        st.caption(
+            f"{len(visible_history)} "
+            f"{t('found')}"
+        )
+
+        for row in visible_history:
+
+            action = str(
+                row.get(
+                    "action",
+                    "",
+                )
+            )
+
+            action_icon = (
+                "✏️"
+                if action == "EDIT"
+                else "🗑️"
+            )
+
+            created_at = row.get(
+                "created_at",
+                "",
+            )
+
+            with st.expander(
+                f"{action_icon} "
+                f"{row.get('record_type', '')}"
+                f" | "
+                f"{row.get('record_number', '')}"
+                f" | "
+                f"{created_at}"
+            ):
+
+                st.write(
+                    f"**{t('record_type')}:** "
+                    f"{row.get('record_type', '')}"
+                )
+
+                st.write(
+                    f"**{t('action')}:** "
+                    f"{action}"
+                )
+
+                # ============================================================
+                # CLEAN PROFESSIONAL CHANGE DISPLAY
+                # ============================================================
+
+                old_data = row.get("old_data") or {}
+                new_data = row.get("new_data") or {}
+
+                field_labels = {
+                    "invoice_number": "Invoice Number",
+                    "invoice_date": "Invoice Date",
+                    "customer_name": "Customer Name",
+                    "customer_address": "Address",
+                    "customer_gstin": "Customer GSTIN",
+                    "customer_state": "Customer State",
+                    "place_of_supply": "Place of Supply",
+                    "taxable_value": "Taxable Value",
+                    "cgst": "CGST",
+                    "sgst": "SGST",
+                    "igst": "IGST",
+                    "grand_total": "Grand Total",
+
+                    "expense_date": "Expense Date",
+                    "category": "Category",
+                    "amount": "Amount",
+                    "note": "Note",
+
+                    "supplier_name": "Supplier Name",
+                    "supplier_address": "Supplier Address",
+                    "supplier_gstin": "Supplier GSTIN",
+                    "purchase_date": "Purchase Date",
+                    "purchase_number": "Purchase Number",
+
+                    "product_name": "Product Name",
+                    "description": "Description",
+                    "hsn_sac": "HSN / SAC",
+                    "quantity": "Quantity",
+                    "rate": "Rate",
+                    "gst_percent": "GST %",
+                    "items": "Items",
+"paid_amount": "Paid Amount",
+                }
+
+                money_fields = {
+                    "taxable_value",
+                    "cgst",
+                    "sgst",
+                    "igst",
+                    "grand_total",
+                    "amount",
+                    "rate",
+                    "paid_amount",
+                }
+
+                def clean_field_name(key):
+                    return field_labels.get(
+                        key,
+                        str(key).replace("_", " ").title()
+                    )
+
+                def clean_value(key, value):
+                    if key == "items" and isinstance(value, list):
+                        item_lines = []
+
+                        for index, item in enumerate(value, start=1):
+                            if isinstance(item, dict):
+                                description = (
+    item.get("product_name")
+    or item.get("desc")
+    or item.get("description")
+    or item.get("name")
+    or "-"
+)
+
+                                qty = item.get("qty", 0)
+                                rate = item.get("rate", 0)
+                                gst_rate = item.get("gst_rate", 0)
+                                amount = item.get("amount", 0)
+
+                                item_lines.append(
+                                    f"Item {index}: {description} | "
+                                    f"Qty: {qty} | "
+                                    f"Rate: ₹ {float(rate):,.2f} | "
+                                    f"GST: {gst_rate}% | "
+                                    f"Amount: ₹ {float(amount):,.2f}"
+                                )
+
+                        return "  \n".join(item_lines)
+                    if value is None or value == "":
+                        return "-"
+
+                    if key in money_fields:
+                        try:
+                            return f"₹ {float(value):,.2f}"
+                        except (TypeError, ValueError):
+                            return str(value)
+
+                    if isinstance(value, float):
+                        return f"{value:,.2f}"
+
+                    return str(value)
+
+                action_value = str(
+                    row.get("action", "")
+                ).upper()
+
+                # ---------------- EDIT HISTORY ----------------
+                if action_value == "EDIT":
+
+                    changed_keys = []
+
+                    all_keys = list(
+                        dict.fromkeys(
+                            list(old_data.keys()) +
+                            list(new_data.keys())
+                        )
+                    )
+
+                    for key in all_keys:
+                        old_value = old_data.get(key)
+                        new_value = new_data.get(key)
+
+                        if old_value != new_value:
+                            changed_keys.append(key)
+
+                    if changed_keys:
+                        st.markdown(f"### ✏️ {t('change_history')}")
+
+                        for key in changed_keys:
+                            label = clean_field_name(key)
+
+                            old_value = clean_value(
+                                key,
+                                old_data.get(key)
+                            )
+
+                            new_value = clean_value(
+                                key,
+                                new_data.get(key)
+                            )
+
+                            st.markdown(
+                                f"**{label}:** "
+                                f"`{old_value}` → `{new_value}`"
+                            )
+
+                    else:
+                        st.info(
+                            t("no_visible_changes")
+                        )
+
+                # ---------------- DELETE HISTORY ----------------
+                elif action_value == "DELETE":
+
+                    st.markdown(
+                        f"### 🗑️ {t('delete_record')}"
+                    )
+
+                    if old_data:
+                        for key, value in old_data.items():
+                            label = clean_field_name(key)
+                            display_value = clean_value(
+                                key,
+                                value
+                            )
+
+                            st.markdown(
+                                f"**{label}:** {display_value}"
+                            )
+
+                    else:
+                        st.info(
+                            t("no_previous_record")
+                        )
+
+                # ---------------- OTHER ACTION ----------------
+                else:
+
+                    if old_data:
+                        st.markdown(
+                            f"### {t('old_data')}"
+                        )
+
+                        for key, value in old_data.items():
+                            label = clean_field_name(key)
+                            display_value = clean_value(
+                                key,
+                                value
+                            )
+
+                            st.markdown(
+                                f"**{label}:** {display_value}"
+                            )
+
+                    if new_data:
+                        st.markdown(
+                            f"### {t('new_data')}"
+                        )
+
+                        for key, value in new_data.items():
+                            label = clean_field_name(key)
+                            display_value = clean_value(
+                                key,
+                                value
+                            )
+
+                            st.markdown(
+                                f"**{label}:** {display_value}"
+                            )
 
 # ============================================================
 # REPORTS
@@ -2389,53 +7403,1057 @@ elif menu == "reports":
         for p in filtered_purchases
     )
     purchase_total = sum(float(p.get("grand_total", 0) or 0) for p in filtered_purchases)
+    with engine.begin() as con:
+        report_expenses = con.execute(
+            select(expenses_table)
+            .where(expenses_table.c.user_id == USER_ID)
+        ).mappings().all()
+
+    filtered_expenses = []
+    for e in report_expenses:
+        d = parse_app_date(e.get("expense_date"))
+        if d is None or (date_from <= d <= date_to):
+            filtered_expenses.append(e)
+
+    expense_total = sum(
+        float(e.get("amount", 0) or 0)
+        for e in filtered_expenses
+    )
+
+    filtered_sales_returns = []
+    for r in sales_returns:
+        d = parse_app_date(r.get("return_date"))
+        if d is not None and date_from <= d <= date_to:
+            filtered_sales_returns.append(r)
+
+    filtered_purchase_returns = []
+    for r in purchase_returns:
+        d = parse_app_date(r.get("return_date"))
+        if d is not None and date_from <= d <= date_to:
+            filtered_purchase_returns.append(r)
+
+    sales_return_taxable = sum(
+        float(r.get("taxable_value", 0) or 0)
+        for r in filtered_sales_returns
+    )
+
+    sales_return_cgst = sum(
+        float(r.get("cgst", 0) or 0)
+        for r in filtered_sales_returns
+    )
+
+    sales_return_sgst = sum(
+        float(r.get("sgst", 0) or 0)
+        for r in filtered_sales_returns
+    )
+
+    sales_return_igst = sum(
+        float(r.get("igst", 0) or 0)
+        for r in filtered_sales_returns
+    )
+
+    sales_return_total = sum(
+        float(r.get("grand_total", 0) or 0)
+        for r in filtered_sales_returns
+    )
+
+    purchase_return_taxable = sum(
+        float(r.get("taxable_value", 0) or 0)
+        for r in filtered_purchase_returns
+    )
+
+    purchase_return_cgst = sum(
+        float(r.get("cgst", 0) or 0)
+        for r in filtered_purchase_returns
+    )
+
+    purchase_return_sgst = sum(
+        float(r.get("sgst", 0) or 0)
+        for r in filtered_purchase_returns
+    )
+
+    purchase_return_igst = sum(
+        float(r.get("igst", 0) or 0)
+        for r in filtered_purchase_returns
+    )
+
+    purchase_return_total = sum(
+        float(r.get("grand_total", 0) or 0)
+        for r in filtered_purchase_returns
+    )
+
+    net_taxable_sales = taxable - sales_return_taxable
+    net_cgst = cgst_total - sales_return_cgst
+    net_sgst = sgst_total - sales_return_sgst
+    net_igst = igst_total - sales_return_igst
+    net_total_sales = total - sales_return_total
+
+    net_purchase_taxable = purchase_taxable - purchase_return_taxable
+    net_purchase_gst = purchase_gst - (
+        purchase_return_cgst
+        + purchase_return_sgst
+        + purchase_return_igst
+    )
+    net_purchase_total = purchase_total - purchase_return_total
+
+    estimated_profit_loss = (
+        net_total_sales
+        - net_purchase_total
+        - expense_total
+    )
 
     st.subheader(t("sales_summary"))
     a, b, c = st.columns(3)
-    a.metric(t("taxable_sales"), money(taxable))
-    b.metric(t("total_gst"), money(cgst_total + sgst_total + igst_total))
-    c.metric(t("total_sales"), money(total))
+    a.metric(t("taxable_sales"), money(net_taxable_sales))
+    b.metric(t("total_gst"), money(net_cgst + net_sgst + net_igst))
+    c.metric(t("total_sales"), money(net_total_sales))
 
     d, e, f = st.columns(3)
-    d.metric(t("cgst"), money(cgst_total))
-    e.metric(t("sgst"), money(sgst_total))
-    f.metric(t("igst"), money(igst_total))
+    d.metric(t("cgst"), money(net_cgst))
+    e.metric(t("sgst"), money(net_sgst))
+    f.metric(t("igst"), money(net_igst))
 
     st.subheader(t("purchase_summary"))
     p1, p2, p3 = st.columns(3)
-    p1.metric(t("taxable_purchases"), money(purchase_taxable))
-    p2.metric(t("purchase_gst"), money(purchase_gst))
-    p3.metric(t("total_purchases"), money(purchase_total))
+    p1.metric(t("taxable_purchases"), money(net_purchase_taxable))
+    p2.metric(t("purchase_gst"), money(net_purchase_gst))
+    p3.metric(t("total_purchases"), money(net_purchase_total))
 
+    e1, e2 = st.columns(2)
+    e1.metric(t("total_expenses"), money(expense_total))
+    e2.metric(t("estimated_profit_loss"), money(estimated_profit_loss))
     st.markdown("---")
     c1, c2 = st.columns(2)
+
     with c1:
         st.subheader(t("customer_sales"))
         customer_totals = {}
+
         for inv in filtered_invoices:
             name = inv.get("customer_name", "")
-            customer_totals[name] = customer_totals.get(name, 0.0) + float(inv.get("grand_total", 0) or 0)
-        for name, value in sorted(customer_totals.items(), key=lambda kv: kv[1], reverse=True)[:20]:
+            customer_totals[name] = (
+                customer_totals.get(name, 0.0)
+                + float(inv.get("grand_total", 0) or 0)
+            )
+
+        for r in filtered_sales_returns:
+            name = r.get("customer_name", "")
+            customer_totals[name] = (
+                customer_totals.get(name, 0.0)
+                - float(r.get("grand_total", 0) or 0)
+            )
+
+        for name, value in sorted(
+            customer_totals.items(),
+            key=lambda kv: kv[1],
+            reverse=True,
+        )[:20]:
             st.write(f"{name}: **{money(value)}**")
 
     with c2:
         st.subheader(t("supplier_purchases"))
         supplier_totals = {}
+
         for pur in filtered_purchases:
             name = pur.get("supplier_name", "")
-            supplier_totals[name] = supplier_totals.get(name, 0.0) + float(pur.get("grand_total", 0) or 0)
-        for name, value in sorted(supplier_totals.items(), key=lambda kv: kv[1], reverse=True)[:20]:
+            supplier_totals[name] = (
+                supplier_totals.get(name, 0.0)
+                + float(pur.get("grand_total", 0) or 0)
+            )
+
+        for r in filtered_purchase_returns:
+            name = r.get("supplier_name", "")
+            supplier_totals[name] = (
+                supplier_totals.get(name, 0.0)
+                - float(r.get("grand_total", 0) or 0)
+            )
+
+        for name, value in sorted(
+            supplier_totals.items(),
+            key=lambda kv: kv[1],
+            reverse=True,
+        )[:20]:
             st.write(f"{name}: **{money(value)}**")
 
     st.subheader(t("product_sales"))
     product_totals = {}
+
     for inv in filtered_invoices:
         for item in inv.get("items", []):
             name = item.get("desc", "")
-            product_totals[name] = product_totals.get(name, 0.0) + float(item.get("amount", 0) or 0)
-    for name, value in sorted(product_totals.items(), key=lambda kv: kv[1], reverse=True)[:30]:
-        st.write(f"{name}: **{money(value)}**")
+            product_totals[name] = (
+                product_totals.get(name, 0.0)
+                + float(item.get("amount", 0) or 0)
+            )
 
+    for r in filtered_sales_returns:
+        for item in r.get("items", []):
+            name = item.get("desc", "")
+            product_totals[name] = (
+                product_totals.get(name, 0.0)
+                - float(item.get("amount", 0) or 0)
+            )
+
+    for name, value in sorted(
+        product_totals.items(),
+        key=lambda kv: kv[1],
+        reverse=True,
+    )[:30]:
+        st.write(f"{name}: **{money(value)}**")
+        # ============================================================
+    # V5.3 - EXCEL / CSV EXPORT
+    # ============================================================
+    st.markdown("---")
+    st.subheader(f"📤 {t('export_excel_csv')}")
+
+    st.caption(
+        f"{t('export_data_from')} "
+        f"{date_from.strftime('%d-%m-%Y')} {t('export_to')} "
+        f"{date_to.strftime('%d-%m-%Y')}"
+    )
+
+    import csv
+    import zipfile
+
+    # ------------------------------------------------------------
+    # SALES DATA
+    # ------------------------------------------------------------
+    sales_headers = [
+        "Invoice Number",
+        "Date",
+        "Customer",
+        "Customer GSTIN",
+        "Place of Supply",
+        "Items",
+        "Taxable Value",
+        "CGST",
+        "SGST",
+        "IGST",
+        "Grand Total",
+        "Paid Amount",
+        "Balance Amount",
+        "Payment Status",
+    ]
+
+    sales_rows = []
+
+    for inv in filtered_invoices:
+        item_texts = []
+
+        for item in inv.get("items", []):
+            item_texts.append(
+                f"{item.get('desc', '')} "
+                f"x {float(item.get('qty', 0) or 0):g} "
+                f"@ {float(item.get('rate', 0) or 0):.2f}"
+            )
+
+        paid_amount, balance_amount, status_key = (
+            payment_status_for_invoice(
+                inv,
+                PAID_MAP,
+            )
+        )
+
+        sales_rows.append([
+            inv.get("invoice_number", ""),
+            inv.get("invoice_date", ""),
+            inv.get("customer_name", ""),
+            inv.get("customer_gstin", ""),
+            inv.get("place_of_supply", ""),
+            "; ".join(item_texts),
+
+            float(
+                inv.get(
+                    "taxable_value",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                inv.get(
+                    "cgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                inv.get(
+                    "sgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                inv.get(
+                    "igst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                inv.get(
+                    "grand_total",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                paid_amount
+                or 0
+            ),
+
+            float(
+                balance_amount
+                or 0
+            ),
+
+            t(status_key),
+        ])
+
+    # ------------------------------------------------------------
+    # PURCHASE DATA
+    # ------------------------------------------------------------
+    purchase_headers = [
+        "Supplier Bill Number",
+        "Date",
+        "Supplier",
+        "Supplier GSTIN",
+        "Items",
+        "Taxable Value",
+        "CGST",
+        "SGST",
+        "IGST",
+        "Grand Total",
+    ]
+
+    purchase_rows = []
+
+    for pur in filtered_purchases:
+        item_texts = []
+
+        for item in pur.get("items", []):
+            item_texts.append(
+                f"{item.get('desc', '')} "
+                f"x {float(item.get('qty', 0) or 0):g} "
+                f"@ {float(item.get('rate', 0) or 0):.2f}"
+            )
+
+        purchase_rows.append([
+            pur.get("bill_number", ""),
+            pur.get("purchase_date", ""),
+            pur.get("supplier_name", ""),
+            pur.get("supplier_gstin", ""),
+            "; ".join(item_texts),
+
+            float(
+                pur.get(
+                    "taxable_value",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                pur.get(
+                    "cgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                pur.get(
+                    "sgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                pur.get(
+                    "igst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                pur.get(
+                    "grand_total",
+                    0,
+                )
+                or 0
+            ),
+        ])
+
+    # ------------------------------------------------------------
+    # EXPENSE DATA
+    # ------------------------------------------------------------
+    expense_headers = [
+        "Date",
+        "Category",
+        "Amount",
+        "Note",
+    ]
+
+    expense_rows_export = []
+
+    for exp in filtered_expenses:
+        expense_rows_export.append([
+            exp.get(
+                "expense_date",
+                "",
+            ),
+
+            exp.get(
+                "category",
+                "",
+            ),
+
+            float(
+                exp.get(
+                    "amount",
+                    0,
+                )
+                or 0
+            ),
+
+            exp.get(
+                "note",
+                "",
+            ),
+        ])
+
+    # ------------------------------------------------------------
+    # CUSTOMER LEDGER DATA
+    # ------------------------------------------------------------
+    ledger_headers = [
+        "Customer",
+        "Invoice Number",
+        "Invoice Date",
+        "Invoice Total",
+        "Paid Amount",
+        "Balance Amount",
+        "Payment Status",
+    ]
+
+    ledger_rows_export = []
+
+    for inv in filtered_invoices:
+        paid_amount, balance_amount, status_key = (
+            payment_status_for_invoice(
+                inv,
+                PAID_MAP,
+            )
+        )
+
+        ledger_rows_export.append([
+            inv.get(
+                "customer_name",
+                "",
+            ),
+
+            inv.get(
+                "invoice_number",
+                "",
+            ),
+
+            inv.get(
+                "invoice_date",
+                "",
+            ),
+
+            float(
+                inv.get(
+                    "grand_total",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                paid_amount
+                or 0
+            ),
+
+            float(
+                balance_amount
+                or 0
+            ),
+
+            t(status_key),
+        ])
+
+    # ------------------------------------------------------------
+    # SALES RETURN DATA
+    # ------------------------------------------------------------
+    sales_return_headers = [
+        "Return Number",
+        "Return Date",
+        "Original Invoice",
+        "Customer",
+        "Reason",
+        "Taxable Value",
+        "CGST",
+        "SGST",
+        "IGST",
+        "Grand Total",
+    ]
+
+    sales_return_rows_export = []
+
+    for row in filtered_sales_returns:
+        sales_return_rows_export.append([
+            row.get(
+                "return_number",
+                "",
+            ),
+
+            row.get(
+                "return_date",
+                "",
+            ),
+
+            row.get(
+                "original_invoice_number",
+                "",
+            ),
+
+            row.get(
+                "customer_name",
+                "",
+            ),
+
+            row.get(
+                "reason",
+                "",
+            ),
+
+            float(
+                row.get(
+                    "taxable_value",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "cgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "sgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "igst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "grand_total",
+                    0,
+                )
+                or 0
+            ),
+        ])
+
+    # ------------------------------------------------------------
+    # PURCHASE RETURN DATA
+    # ------------------------------------------------------------
+    purchase_return_headers = [
+        "Return Number",
+        "Return Date",
+        "Original Bill",
+        "Supplier",
+        "Reason",
+        "Taxable Value",
+        "CGST",
+        "SGST",
+        "IGST",
+        "Grand Total",
+    ]
+
+    purchase_return_rows_export = []
+
+    for row in filtered_purchase_returns:
+        purchase_return_rows_export.append([
+            row.get(
+                "return_number",
+                "",
+            ),
+
+            row.get(
+                "return_date",
+                "",
+            ),
+
+            row.get(
+                "original_bill_number",
+                "",
+            ),
+
+            row.get(
+                "supplier_name",
+                "",
+            ),
+
+            row.get(
+                "reason",
+                "",
+            ),
+
+            float(
+                row.get(
+                    "taxable_value",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "cgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "sgst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "igst",
+                    0,
+                )
+                or 0
+            ),
+
+            float(
+                row.get(
+                    "grand_total",
+                    0,
+                )
+                or 0
+            ),
+        ])
+
+    # ------------------------------------------------------------
+    # REPORT SUMMARY
+    # ------------------------------------------------------------
+    report_headers = [
+        "Report",
+        "Value",
+    ]
+
+    report_rows_export = [
+        [
+            "Company",
+            current_user.get(
+                "company_name",
+                "",
+            ),
+        ],
+
+        [
+            "From Date",
+            date_from.strftime(
+                "%d-%m-%Y"
+            ),
+        ],
+
+        [
+            "To Date",
+            date_to.strftime(
+                "%d-%m-%Y"
+            ),
+        ],
+
+        [
+            "Taxable Sales",
+            float(
+                net_taxable_sales
+                or 0
+            ),
+        ],
+
+        [
+            "Sales GST",
+            float(
+                net_cgst
+                + net_sgst
+                + net_igst
+            ),
+        ],
+
+        [
+            "Net Sales",
+            float(
+                net_total_sales
+                or 0
+            ),
+        ],
+
+        [
+            "Taxable Purchases",
+            float(
+                net_purchase_taxable
+                or 0
+            ),
+        ],
+
+        [
+            "Purchase GST",
+            float(
+                net_purchase_gst
+                or 0
+            ),
+        ],
+
+        [
+            "Net Purchases",
+            float(
+                net_purchase_total
+                or 0
+            ),
+        ],
+
+        [
+            "Sales Returns",
+            float(
+                sales_return_total
+                or 0
+            ),
+        ],
+
+        [
+            "Purchase Returns",
+            float(
+                purchase_return_total
+                or 0
+            ),
+        ],
+
+        [
+            "Total Expenses",
+            float(
+                expense_total
+                or 0
+            ),
+        ],
+
+        [
+            "Estimated Profit / Loss",
+            float(
+                estimated_profit_loss
+                or 0
+            ),
+        ],
+    ]
+
+    # ------------------------------------------------------------
+    # CSV FUNCTION
+    # ------------------------------------------------------------
+    def make_csv_bytes(
+        headers,
+        rows,
+    ):
+        text_buffer = io.StringIO()
+
+        writer = csv.writer(
+            text_buffer
+        )
+
+        writer.writerow(
+            headers
+        )
+
+        writer.writerows(
+            rows
+        )
+
+        return (
+            text_buffer
+            .getvalue()
+            .encode(
+                "utf-8-sig"
+            )
+        )
+
+    # ------------------------------------------------------------
+    # CREATE CSV ZIP
+    # ------------------------------------------------------------
+    csv_zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(
+        csv_zip_buffer,
+        "w",
+        zipfile.ZIP_DEFLATED,
+    ) as csv_zip:
+
+        csv_zip.writestr(
+            "sales.csv",
+            make_csv_bytes(
+                sales_headers,
+                sales_rows,
+            ),
+        )
+
+        csv_zip.writestr(
+            "purchases.csv",
+            make_csv_bytes(
+                purchase_headers,
+                purchase_rows,
+            ),
+        )
+
+        csv_zip.writestr(
+            "expenses.csv",
+            make_csv_bytes(
+                expense_headers,
+                expense_rows_export,
+            ),
+        )
+
+        csv_zip.writestr(
+            "customer_ledger.csv",
+            make_csv_bytes(
+                ledger_headers,
+                ledger_rows_export,
+            ),
+        )
+
+        csv_zip.writestr(
+            "sales_returns.csv",
+            make_csv_bytes(
+                sales_return_headers,
+                sales_return_rows_export,
+            ),
+        )
+
+        csv_zip.writestr(
+            "purchase_returns.csv",
+            make_csv_bytes(
+                purchase_return_headers,
+                purchase_return_rows_export,
+            ),
+        )
+
+        csv_zip.writestr(
+            "report_summary.csv",
+            make_csv_bytes(
+                report_headers,
+                report_rows_export,
+            ),
+        )
+
+    csv_zip_buffer.seek(0)
+
+    # ------------------------------------------------------------
+    # CREATE EXCEL WORKBOOK
+    # ------------------------------------------------------------
+    excel_bytes = None
+    excel_error = None
+
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font
+
+        excel_buffer = io.BytesIO()
+
+        workbook = Workbook()
+
+        default_sheet = workbook.active
+        workbook.remove(
+            default_sheet
+        )
+
+        def add_excel_sheet(
+            sheet_name,
+            headers,
+            rows,
+        ):
+            worksheet = workbook.create_sheet(
+                title=sheet_name
+            )
+
+            worksheet.append(
+                headers
+            )
+
+            for cell in worksheet[1]:
+                cell.font = Font(
+                    bold=True
+                )
+
+            for row in rows:
+                worksheet.append(
+                    row
+                )
+
+            worksheet.freeze_panes = "A2"
+            worksheet.auto_filter.ref = (
+                worksheet.dimensions
+            )
+
+            for column_cells in worksheet.columns:
+                max_length = 0
+
+                column_letter = (
+                    column_cells[0]
+                    .column_letter
+                )
+
+                for cell in column_cells:
+                    try:
+                        cell_length = len(
+                            str(
+                                cell.value
+                                if cell.value is not None
+                                else ""
+                            )
+                        )
+
+                        if cell_length > max_length:
+                            max_length = (
+                                cell_length
+                            )
+
+                    except Exception:
+                        pass
+
+                worksheet.column_dimensions[
+                    column_letter
+                ].width = min(
+                    max(
+                        max_length + 2,
+                        12,
+                    ),
+                    45,
+                )
+
+        add_excel_sheet(
+            "Report Summary",
+            report_headers,
+            report_rows_export,
+        )
+
+        add_excel_sheet(
+            "Sales",
+            sales_headers,
+            sales_rows,
+        )
+
+        add_excel_sheet(
+            "Purchases",
+            purchase_headers,
+            purchase_rows,
+        )
+
+        add_excel_sheet(
+            "Expenses",
+            expense_headers,
+            expense_rows_export,
+        )
+
+        add_excel_sheet(
+            "Customer Ledger",
+            ledger_headers,
+            ledger_rows_export,
+        )
+
+        add_excel_sheet(
+            "Sales Returns",
+            sales_return_headers,
+            sales_return_rows_export,
+        )
+
+        add_excel_sheet(
+            "Purchase Returns",
+            purchase_return_headers,
+            purchase_return_rows_export,
+        )
+
+        workbook.save(
+            excel_buffer
+        )
+
+        excel_buffer.seek(0)
+
+        excel_bytes = (
+            excel_buffer.getvalue()
+        )
+
+    except Exception as exc:
+        excel_error = str(exc)
+
+    # ------------------------------------------------------------
+    # DOWNLOAD BUTTONS
+    # ------------------------------------------------------------
+    export_col1, export_col2 = st.columns(2)
+
+    with export_col1:
+
+        if excel_bytes is not None:
+            st.download_button(
+                f"📊 {t('download_excel')}",
+                data=excel_bytes,
+                file_name=(
+                    "shivpruba_billing_report_"
+                    f"{date_from.strftime('%Y%m%d')}_"
+                    f"{date_to.strftime('%Y%m%d')}.xlsx"
+                ),
+                mime=(
+                    "application/"
+                    "vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                ),
+                use_container_width=True,
+                key="download_excel_report",
+            )
+
+        else:
+            st.warning(
+                f"{t('excel_export_failed')}: {excel_error}"
+            )
+
+    with export_col2:
+
+        st.download_button(
+            f"📁 {t('download_csv_files')}",
+            data=csv_zip_buffer.getvalue(),
+            file_name=(
+                "shivpruba_billing_csv_"
+                f"{date_from.strftime('%Y%m%d')}_"
+                f"{date_to.strftime('%Y%m%d')}.zip"
+            ),
+            mime="application/zip",
+            use_container_width=True,
+            key="download_csv_report",
+        )
 # ============================================================
 # SETTINGS + BACKUP
 # ============================================================
@@ -2476,37 +8494,1397 @@ elif menu == "settings":
         st.success(t("settings_saved"))
         st.rerun()
 
+     # ============================================================
+    # V5.3 - BACKUP + RESTORE
+    # ============================================================
     st.markdown("---")
     st.subheader(f"💾 {t('backup')}")
     st.caption(t("backup_help"))
 
+    # ------------------------------------------------------------
+    # LOAD EXPENSES FOR BACKUP
+    # ------------------------------------------------------------
+    with engine.connect() as con:
+        backup_expenses = [
+            dict(row)
+            for row in con.execute(
+                select(expenses_table)
+                .where(expenses_table.c.user_id == USER_ID)
+                .order_by(expenses_table.c.id)
+            ).mappings().all()
+        ]
+
+    # ------------------------------------------------------------
+    # CREATE COMPLETE BACKUP
+    # ------------------------------------------------------------
     backup_data = {
+        "backup_format": "SHIVPRUBA_BILLING_V1",
+        "app_name": APP_NAME,
+        "app_version": APP_VERSION,
         "generated_at": now_naive().isoformat(),
         "language": selected_lang,
+
         "business": {
             key: current_user.get(key)
             for key in [
-                "company_name", "company_address", "company_gstin",
-                "company_phone", "company_email", "company_state"
+                "company_name",
+                "company_address",
+                "company_gstin",
+                "company_phone",
+                "company_email",
+                "company_state",
             ]
         },
+
+        "app_settings": {
+            "invoice_prefix": app_settings.get("invoice_prefix", "INV"),
+            "default_low_stock": float(
+                app_settings.get("default_low_stock", 5.0) or 5.0
+            ),
+        },
+
         "customers": customers,
         "suppliers": suppliers,
         "products": products,
         "inventory": get_inventory(USER_ID),
+
         "purchases": purchases,
-        "stock_ledger": get_stock_ledger(USER_ID),
+        "purchase_returns": purchase_returns,
+
         "invoices": invoices,
+        "sales_returns": sales_returns,
+
+        "quotations": quotations,
+
         "payments": get_payments(USER_ID),
+        "expenses": backup_expenses,
+
+        "stock_ledger": get_stock_ledger(USER_ID),
     }
 
     st.download_button(
-        t("download_backup"),
-        json.dumps(backup_data, ensure_ascii=False, indent=2, default=str).encode("utf-8"),
-        "shivpruba_billing_backup.json",
+        "⬇️ " + t("download_backup"),
+        json.dumps(
+            backup_data,
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        ).encode("utf-8"),
+        f"shivpruba_billing_backup_{date.today().strftime('%Y%m%d')}.json",
         "application/json",
         use_container_width=True,
+        key="download_complete_backup",
     )
+
+    st.caption(
+        t("backup_keep_safe")
+    )
+
+    # ------------------------------------------------------------
+    # RESTORE BACKUP
+    # ------------------------------------------------------------
+    st.markdown("---")
+    st.subheader(f"♻️ {t('restore_backup')}")
+
+    st.info(
+        t("restore_help")
+    )
+
+    uploaded_backup = st.file_uploader(
+        t("upload_backup_file"),
+        type=["json"],
+        key="restore_backup_file",
+    )
+
+    restore_data = None
+    restore_valid = False
+
+    if uploaded_backup is not None:
+        try:
+            raw_backup = uploaded_backup.getvalue().decode("utf-8-sig")
+            restore_data = json.loads(raw_backup)
+
+            if not isinstance(restore_data, dict):
+                raise ValueError("Invalid backup structure.")
+
+            required_sections = [
+                "business",
+                "customers",
+                "products",
+                "inventory",
+                "purchases",
+                "invoices",
+            ]
+
+            missing_sections = [
+                section
+                for section in required_sections
+                if section not in restore_data
+            ]
+
+            if missing_sections:
+                st.error(
+                    f"{t('invalid_backup_missing')}: " + ", ".join(missing_sections)
+                )
+            else:
+                restore_valid = True
+
+                st.success(t("backup_valid"))
+
+                r1, r2, r3 = st.columns(3)
+
+                r1.metric(
+                    t("customers"),
+                    len(restore_data.get("customers", [])),
+                )
+
+                r2.metric(
+                    t("products"),
+                    len(restore_data.get("products", [])),
+                )
+
+                r3.metric(
+                    t("invoices"),
+                    len(restore_data.get("invoices", [])),
+                )
+
+                r4, r5, r6 = st.columns(3)
+
+                r4.metric(
+                    t("purchases"),
+                    len(restore_data.get("purchases", [])),
+                )
+
+                r5.metric(
+                    t("quotation"),
+                    len(restore_data.get("quotations", [])),
+                )
+
+                r6.metric(
+                    t("expenses"),
+                    len(restore_data.get("expenses", [])),
+                )
+
+        except Exception as exc:
+            restore_valid = False
+            st.error(f"{t('backup_read_failed')}: {exc}")
+
+    if restore_valid and restore_data is not None:
+
+        confirm_restore = st.checkbox(
+            t("restore_confirm_replace"),
+            key="confirm_restore_checkbox",
+        )
+
+        restore_word = st.text_input(
+            t("restore_type_confirm"),
+            key="restore_confirmation_word",
+        )
+
+        restore_button = st.button(
+            f"♻️ {t('restore_my_backup')}",
+            type="primary",
+            use_container_width=True,
+            key="restore_backup_button",
+            disabled=not (
+                confirm_restore
+                and restore_word.strip().upper() == "RESTORE"
+            ),
+        )
+
+        if restore_button:
+
+            # ----------------------------------------------------
+            # HELPERS
+            # ----------------------------------------------------
+            def backup_items(row):
+                items_value = row.get("items")
+
+                if isinstance(items_value, list):
+                    return items_value
+
+                try:
+                    return json.loads(
+                        row.get("items_json") or "[]"
+                    )
+                except Exception:
+                    return []
+
+            def remap_items(row, product_id_map):
+                output = []
+
+                for old_item in backup_items(row):
+                    item = dict(old_item)
+
+                    old_pid = item.get("product_id")
+
+                    if old_pid not in (None, "", 0, "0"):
+                        try:
+                            old_pid_int = int(old_pid)
+                            item["product_id"] = (
+                                product_id_map.get(old_pid_int)
+                            )
+                        except Exception:
+                            item["product_id"] = None
+
+                    output.append(item)
+
+                return output
+
+            def safe_float(value, default=0.0):
+                try:
+                    return float(value or 0)
+                except Exception:
+                    return float(default)
+
+            # ----------------------------------------------------
+            # RESTORE TRANSACTION
+            # ----------------------------------------------------
+            try:
+                with engine.begin() as con:
+
+                    # =================================================
+                    # 1. DELETE CURRENT USER BUSINESS DATA
+                    # =================================================
+                    con.execute(
+                        delete(payments_table).where(
+                            payments_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(sales_returns_table).where(
+                            sales_returns_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(purchase_returns_table).where(
+                            purchase_returns_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(stock_ledger_table).where(
+                            stock_ledger_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(quotations_table).where(
+                            quotations_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(invoices_table).where(
+                            invoices_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(purchases_table).where(
+                            purchases_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(product_inventory_table).where(
+                            product_inventory_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(products_table).where(
+                            products_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(customers_table).where(
+                            customers_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(suppliers_table).where(
+                            suppliers_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    con.execute(
+                        delete(expenses_table).where(
+                            expenses_table.c.user_id == USER_ID
+                        )
+                    )
+
+                    # =================================================
+                    # 2. RESTORE BUSINESS PROFILE
+                    # =================================================
+                    business_backup = restore_data.get(
+                        "business",
+                        {},
+                    )
+
+                    restored_state = business_backup.get(
+                        "company_state",
+                        "Maharashtra",
+                    )
+
+                    if restored_state not in STATES:
+                        restored_state = "Maharashtra"
+
+                    restored_language = normalize_lang(
+                        restore_data.get(
+                            "language",
+                            selected_lang,
+                        )
+                    )
+
+                    con.execute(
+                        update(users)
+                        .where(users.c.id == USER_ID)
+                        .values(
+                            company_name=str(
+                                business_backup.get(
+                                    "company_name",
+                                    "",
+                                )
+                                or ""
+                            ),
+                            company_address=str(
+                                business_backup.get(
+                                    "company_address",
+                                    "",
+                                )
+                                or ""
+                            ),
+                            company_gstin=str(
+                                business_backup.get(
+                                    "company_gstin",
+                                    "",
+                                )
+                                or ""
+                            ),
+                            company_phone=str(
+                                business_backup.get(
+                                    "company_phone",
+                                    "",
+                                )
+                                or ""
+                            ),
+                            company_email=str(
+                                business_backup.get(
+                                    "company_email",
+                                    "",
+                                )
+                                or ""
+                            ),
+                            company_state=restored_state,
+                            preferred_language=restored_language,
+                            setup_complete=True,
+                        )
+                    )
+
+                    # =================================================
+                    # 3. RESTORE APP SETTINGS
+                    # =================================================
+                    settings_backup = restore_data.get(
+                        "app_settings",
+                        {},
+                    )
+
+                    restored_prefix = str(
+                        settings_backup.get(
+                            "invoice_prefix",
+                            "INV",
+                        )
+                        or "INV"
+                    ).strip()
+
+                    restored_low_stock = safe_float(
+                        settings_backup.get(
+                            "default_low_stock",
+                            5.0,
+                        ),
+                        5.0,
+                    )
+
+                    existing_settings = con.execute(
+                        select(user_settings_table).where(
+                            user_settings_table.c.user_id
+                            == USER_ID
+                        )
+                    ).first()
+
+                    if existing_settings:
+                        con.execute(
+                            update(user_settings_table)
+                            .where(
+                                user_settings_table.c.user_id
+                                == USER_ID
+                            )
+                            .values(
+                                invoice_prefix=(
+                                    restored_prefix or "INV"
+                                ),
+                                default_low_stock=(
+                                    restored_low_stock
+                                ),
+                                updated_at=now_naive(),
+                            )
+                        )
+                    else:
+                        con.execute(
+                            insert(user_settings_table).values(
+                                user_id=USER_ID,
+                                invoice_prefix=(
+                                    restored_prefix or "INV"
+                                ),
+                                default_low_stock=(
+                                    restored_low_stock
+                                ),
+                                created_at=now_naive(),
+                                updated_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 4. RESTORE CUSTOMERS
+                    # =================================================
+                    for row in restore_data.get(
+                        "customers",
+                        [],
+                    ):
+                        con.execute(
+                            insert(customers_table).values(
+                                user_id=USER_ID,
+                                name=str(
+                                    row.get("name", "") or ""
+                                ),
+                                address=str(
+                                    row.get("address", "") or ""
+                                ),
+                                gstin=str(
+                                    row.get("gstin", "") or ""
+                                ),
+                                state=str(
+                                    row.get(
+                                        "state",
+                                        "Maharashtra",
+                                    )
+                                    or "Maharashtra"
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 5. RESTORE SUPPLIERS
+                    # =================================================
+                    for row in restore_data.get(
+                        "suppliers",
+                        [],
+                    ):
+                        con.execute(
+                            insert(suppliers_table).values(
+                                user_id=USER_ID,
+                                name=str(
+                                    row.get("name", "") or ""
+                                ),
+                                address=str(
+                                    row.get("address", "") or ""
+                                ),
+                                gstin=str(
+                                    row.get("gstin", "") or ""
+                                ),
+                                phone=str(
+                                    row.get("phone", "") or ""
+                                ),
+                                email=str(
+                                    row.get("email", "") or ""
+                                ),
+                                state=str(
+                                    row.get(
+                                        "state",
+                                        "Maharashtra",
+                                    )
+                                    or "Maharashtra"
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 6. RESTORE PRODUCTS + CREATE ID MAP
+                    # =================================================
+                    product_id_map = {}
+
+                    for row in restore_data.get(
+                        "products",
+                        [],
+                    ):
+                        old_id = int(row.get("id", 0) or 0)
+
+                        result = con.execute(
+                            insert(products_table).values(
+                                user_id=USER_ID,
+                                name=str(
+                                    row.get("name", "") or ""
+                                ),
+                                hsn=str(
+                                    row.get("hsn", "") or ""
+                                ),
+                                rate=safe_float(
+                                    row.get("rate", 0)
+                                ),
+                                gst_rate=safe_float(
+                                    row.get("gst_rate", 18),
+                                    18,
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                        new_id = int(
+                            result.inserted_primary_key[0]
+                        )
+
+                        if old_id:
+                            product_id_map[old_id] = new_id
+
+                    # =================================================
+                    # 7. RESTORE INVENTORY
+                    # =================================================
+                    inventory_done = set()
+
+                    for row in restore_data.get(
+                        "inventory",
+                        [],
+                    ):
+                        old_pid = int(
+                            row.get("product_id", 0) or 0
+                        )
+
+                        new_pid = product_id_map.get(old_pid)
+
+                        if not new_pid:
+                            continue
+
+                        con.execute(
+                            insert(
+                                product_inventory_table
+                            ).values(
+                                user_id=USER_ID,
+                                product_id=new_pid,
+                                sku=str(
+                                    row.get("sku", "") or ""
+                                ),
+                                unit=str(
+                                    row.get("unit", "Pcs")
+                                    or "Pcs"
+                                ),
+                                purchase_rate=safe_float(
+                                    row.get(
+                                        "purchase_rate",
+                                        0,
+                                    )
+                                ),
+                                opening_stock=safe_float(
+                                    row.get(
+                                        "opening_stock",
+                                        0,
+                                    )
+                                ),
+                                low_stock_limit=safe_float(
+                                    row.get(
+                                        "low_stock_limit",
+                                        5,
+                                    ),
+                                    5,
+                                ),
+                                current_stock=safe_float(
+                                    row.get(
+                                        "current_stock",
+                                        0,
+                                    )
+                                ),
+                                updated_at=now_naive(),
+                            )
+                        )
+
+                        inventory_done.add(new_pid)
+
+                    # Create missing inventory rows if necessary
+                    for new_pid in product_id_map.values():
+                        if new_pid not in inventory_done:
+                            con.execute(
+                                insert(
+                                    product_inventory_table
+                                ).values(
+                                    user_id=USER_ID,
+                                    product_id=new_pid,
+                                    sku="",
+                                    unit="Pcs",
+                                    purchase_rate=0.0,
+                                    opening_stock=0.0,
+                                    low_stock_limit=(
+                                        restored_low_stock
+                                    ),
+                                    current_stock=0.0,
+                                    updated_at=now_naive(),
+                                )
+                            )
+
+                    # =================================================
+                    # 8. RESTORE PURCHASES
+                    # =================================================
+                    purchase_id_map = {}
+
+                    for row in restore_data.get(
+                        "purchases",
+                        [],
+                    ):
+                        old_id = int(row.get("id", 0) or 0)
+
+                        restored_items = remap_items(
+                            row,
+                            product_id_map,
+                        )
+
+                        result = con.execute(
+                            insert(purchases_table).values(
+                                user_id=USER_ID,
+                                bill_number=str(
+                                    row.get(
+                                        "bill_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                purchase_date=str(
+                                    row.get(
+                                        "purchase_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                supplier_name=str(
+                                    row.get(
+                                        "supplier_name",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                supplier_address=str(
+                                    row.get(
+                                        "supplier_address",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                supplier_gstin=str(
+                                    row.get(
+                                        "supplier_gstin",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                supplier_state=str(
+                                    row.get(
+                                        "supplier_state",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                items_json=json.dumps(
+                                    restored_items,
+                                    ensure_ascii=False,
+                                ),
+                                taxable_value=safe_float(
+                                    row.get(
+                                        "taxable_value",
+                                        0,
+                                    )
+                                ),
+                                cgst=safe_float(
+                                    row.get("cgst", 0)
+                                ),
+                                sgst=safe_float(
+                                    row.get("sgst", 0)
+                                ),
+                                igst=safe_float(
+                                    row.get("igst", 0)
+                                ),
+                                grand_total=safe_float(
+                                    row.get(
+                                        "grand_total",
+                                        0,
+                                    )
+                                ),
+                                is_intra_state=bool(
+                                    row.get(
+                                        "is_intra_state",
+                                        True,
+                                    )
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                        new_id = int(
+                            result.inserted_primary_key[0]
+                        )
+
+                        if old_id:
+                            purchase_id_map[old_id] = new_id
+
+                    # =================================================
+                    # 9. RESTORE INVOICES
+                    # =================================================
+                    invoice_id_map = {}
+
+                    for row in restore_data.get(
+                        "invoices",
+                        [],
+                    ):
+                        old_id = int(row.get("id", 0) or 0)
+
+                        restored_items = remap_items(
+                            row,
+                            product_id_map,
+                        )
+
+                        result = con.execute(
+                            insert(invoices_table).values(
+                                user_id=USER_ID,
+                                invoice_number=str(
+                                    row.get(
+                                        "invoice_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                invoice_date=str(
+                                    row.get(
+                                        "invoice_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_name=str(
+                                    row.get(
+                                        "customer_name",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_address=str(
+                                    row.get(
+                                        "customer_address",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_gstin=str(
+                                    row.get(
+                                        "customer_gstin",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_state=str(
+                                    row.get(
+                                        "customer_state",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                place_of_supply=str(
+                                    row.get(
+                                        "place_of_supply",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                items_json=json.dumps(
+                                    restored_items,
+                                    ensure_ascii=False,
+                                ),
+                                taxable_value=safe_float(
+                                    row.get(
+                                        "taxable_value",
+                                        0,
+                                    )
+                                ),
+                                cgst=safe_float(
+                                    row.get("cgst", 0)
+                                ),
+                                sgst=safe_float(
+                                    row.get("sgst", 0)
+                                ),
+                                igst=safe_float(
+                                    row.get("igst", 0)
+                                ),
+                                grand_total=safe_float(
+                                    row.get(
+                                        "grand_total",
+                                        0,
+                                    )
+                                ),
+                                is_intra_state=bool(
+                                    row.get(
+                                        "is_intra_state",
+                                        True,
+                                    )
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                        new_id = int(
+                            result.inserted_primary_key[0]
+                        )
+
+                        if old_id:
+                            invoice_id_map[old_id] = new_id
+
+                    # =================================================
+                    # 10. RESTORE QUOTATIONS
+                    # =================================================
+                    for row in restore_data.get(
+                        "quotations",
+                        [],
+                    ):
+                        restored_items = remap_items(
+                            row,
+                            product_id_map,
+                        )
+
+                        con.execute(
+                            insert(quotations_table).values(
+                                user_id=USER_ID,
+                                quotation_number=str(
+                                    row.get(
+                                        "quotation_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                quotation_date=str(
+                                    row.get(
+                                        "quotation_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                valid_until=str(
+                                    row.get(
+                                        "valid_until",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_name=str(
+                                    row.get(
+                                        "customer_name",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_address=str(
+                                    row.get(
+                                        "customer_address",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_gstin=str(
+                                    row.get(
+                                        "customer_gstin",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_state=str(
+                                    row.get(
+                                        "customer_state",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                place_of_supply=str(
+                                    row.get(
+                                        "place_of_supply",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                items_json=json.dumps(
+                                    restored_items,
+                                    ensure_ascii=False,
+                                ),
+                                taxable_value=safe_float(
+                                    row.get(
+                                        "taxable_value",
+                                        0,
+                                    )
+                                ),
+                                cgst=safe_float(
+                                    row.get("cgst", 0)
+                                ),
+                                sgst=safe_float(
+                                    row.get("sgst", 0)
+                                ),
+                                igst=safe_float(
+                                    row.get("igst", 0)
+                                ),
+                                grand_total=safe_float(
+                                    row.get(
+                                        "grand_total",
+                                        0,
+                                    )
+                                ),
+                                is_intra_state=bool(
+                                    row.get(
+                                        "is_intra_state",
+                                        True,
+                                    )
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 11. RESTORE SALES RETURNS
+                    # =================================================
+                    sales_return_id_map = {}
+
+                    for row in restore_data.get(
+                        "sales_returns",
+                        [],
+                    ):
+                        old_return_id = int(
+                            row.get("id", 0) or 0
+                        )
+
+                        old_invoice_id = int(
+                            row.get(
+                                "original_invoice_id",
+                                0,
+                            )
+                            or 0
+                        )
+
+                        new_invoice_id = invoice_id_map.get(
+                            old_invoice_id
+                        )
+
+                        if not new_invoice_id:
+                            continue
+
+                        restored_items = remap_items(
+                            row,
+                            product_id_map,
+                        )
+
+                        result = con.execute(
+                            insert(
+                                sales_returns_table
+                            ).values(
+                                user_id=USER_ID,
+                                original_invoice_id=(
+                                    new_invoice_id
+                                ),
+                                original_invoice_number=str(
+                                    row.get(
+                                        "original_invoice_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                return_number=str(
+                                    row.get(
+                                        "return_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                return_date=str(
+                                    row.get(
+                                        "return_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                customer_name=str(
+                                    row.get(
+                                        "customer_name",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                reason=str(
+                                    row.get("reason", "") or ""
+                                ),
+                                items_json=json.dumps(
+                                    restored_items,
+                                    ensure_ascii=False,
+                                ),
+                                taxable_value=safe_float(
+                                    row.get(
+                                        "taxable_value",
+                                        0,
+                                    )
+                                ),
+                                cgst=safe_float(
+                                    row.get("cgst", 0)
+                                ),
+                                sgst=safe_float(
+                                    row.get("sgst", 0)
+                                ),
+                                igst=safe_float(
+                                    row.get("igst", 0)
+                                ),
+                                grand_total=safe_float(
+                                    row.get(
+                                        "grand_total",
+                                        0,
+                                    )
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                        new_return_id = int(
+                            result.inserted_primary_key[0]
+                        )
+
+                        if old_return_id:
+                            sales_return_id_map[
+                                old_return_id
+                            ] = new_return_id
+
+                    # =================================================
+                    # 12. RESTORE PURCHASE RETURNS
+                    # =================================================
+                    purchase_return_id_map = {}
+
+                    for row in restore_data.get(
+                        "purchase_returns",
+                        [],
+                    ):
+                        old_return_id = int(
+                            row.get("id", 0) or 0
+                        )
+
+                        old_purchase_id = int(
+                            row.get(
+                                "original_purchase_id",
+                                0,
+                            )
+                            or 0
+                        )
+
+                        new_purchase_id = (
+                            purchase_id_map.get(
+                                old_purchase_id
+                            )
+                        )
+
+                        if not new_purchase_id:
+                            continue
+
+                        restored_items = remap_items(
+                            row,
+                            product_id_map,
+                        )
+
+                        result = con.execute(
+                            insert(
+                                purchase_returns_table
+                            ).values(
+                                user_id=USER_ID,
+                                original_purchase_id=(
+                                    new_purchase_id
+                                ),
+                                original_bill_number=str(
+                                    row.get(
+                                        "original_bill_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                return_number=str(
+                                    row.get(
+                                        "return_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                return_date=str(
+                                    row.get(
+                                        "return_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                supplier_name=str(
+                                    row.get(
+                                        "supplier_name",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                reason=str(
+                                    row.get("reason", "") or ""
+                                ),
+                                items_json=json.dumps(
+                                    restored_items,
+                                    ensure_ascii=False,
+                                ),
+                                taxable_value=safe_float(
+                                    row.get(
+                                        "taxable_value",
+                                        0,
+                                    )
+                                ),
+                                cgst=safe_float(
+                                    row.get("cgst", 0)
+                                ),
+                                sgst=safe_float(
+                                    row.get("sgst", 0)
+                                ),
+                                igst=safe_float(
+                                    row.get("igst", 0)
+                                ),
+                                grand_total=safe_float(
+                                    row.get(
+                                        "grand_total",
+                                        0,
+                                    )
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                        new_return_id = int(
+                            result.inserted_primary_key[0]
+                        )
+
+                        if old_return_id:
+                            purchase_return_id_map[
+                                old_return_id
+                            ] = new_return_id
+
+                    # =================================================
+                    # 13. RESTORE PAYMENTS
+                    # =================================================
+                    for row in restore_data.get(
+                        "payments",
+                        [],
+                    ):
+                        old_invoice_id = int(
+                            row.get("invoice_id", 0) or 0
+                        )
+
+                        new_invoice_id = invoice_id_map.get(
+                            old_invoice_id
+                        )
+
+                        if not new_invoice_id:
+                            continue
+
+                        con.execute(
+                            insert(payments_table).values(
+                                user_id=USER_ID,
+                                invoice_id=new_invoice_id,
+                                amount=safe_float(
+                                    row.get("amount", 0)
+                                ),
+                                payment_date=str(
+                                    row.get(
+                                        "payment_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                note=str(
+                                    row.get("note", "") or ""
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 14. RESTORE EXPENSES
+                    # =================================================
+                    for row in restore_data.get(
+                        "expenses",
+                        [],
+                    ):
+                        con.execute(
+                            insert(expenses_table).values(
+                                user_id=USER_ID,
+                                expense_date=str(
+                                    row.get(
+                                        "expense_date",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                category=str(
+                                    row.get(
+                                        "category",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                amount=safe_float(
+                                    row.get("amount", 0)
+                                ),
+                                note=str(
+                                    row.get("note", "") or ""
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                    # =================================================
+                    # 15. RESTORE STOCK LEDGER
+                    # =================================================
+                    for row in restore_data.get(
+                        "stock_ledger",
+                        [],
+                    ):
+                        old_pid = int(
+                            row.get("product_id", 0) or 0
+                        )
+
+                        new_pid = product_id_map.get(old_pid)
+
+                        if not new_pid:
+                            continue
+
+                        reference_type = str(
+                            row.get(
+                                "reference_type",
+                                "",
+                            )
+                            or ""
+                        )
+
+                        old_reference_id = int(
+                            row.get(
+                                "reference_id",
+                                0,
+                            )
+                            or 0
+                        )
+
+                        new_reference_id = 0
+
+                        if reference_type == "INVOICE":
+                            new_reference_id = (
+                                invoice_id_map.get(
+                                    old_reference_id,
+                                    0,
+                                )
+                            )
+
+                        elif reference_type == "PURCHASE":
+                            new_reference_id = (
+                                purchase_id_map.get(
+                                    old_reference_id,
+                                    0,
+                                )
+                            )
+
+                        elif reference_type == "SALES_RETURN":
+                            new_reference_id = (
+                                sales_return_id_map.get(
+                                    old_reference_id,
+                                    0,
+                                )
+                            )
+
+                        elif reference_type == "PURCHASE_RETURN":
+                            new_reference_id = (
+                                purchase_return_id_map.get(
+                                    old_reference_id,
+                                    0,
+                                )
+                            )
+
+                        con.execute(
+                            insert(stock_ledger_table).values(
+                                user_id=USER_ID,
+                                product_id=new_pid,
+                                movement_type=str(
+                                    row.get(
+                                        "movement_type",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                qty_change=safe_float(
+                                    row.get(
+                                        "qty_change",
+                                        0,
+                                    )
+                                ),
+                                balance_after=safe_float(
+                                    row.get(
+                                        "balance_after",
+                                        0,
+                                    )
+                                ),
+                                reference_type=(
+                                    reference_type
+                                ),
+                                reference_id=(
+                                    new_reference_id
+                                ),
+                                reference_number=str(
+                                    row.get(
+                                        "reference_number",
+                                        "",
+                                    )
+                                    or ""
+                                ),
+                                note=str(
+                                    row.get("note", "") or ""
+                                ),
+                                created_at=now_naive(),
+                            )
+                        )
+
+                # ----------------------------------------------------
+                # SUCCESS
+                # ----------------------------------------------------
+                st.session_state.guest_lang = normalize_lang(
+                    restore_data.get(
+                        "language",
+                        selected_lang,
+                    )
+                )
+
+                st.success(
+                    f"✅ {t('backup_restored')}"
+                )
+
+                st.rerun()
+
+            except IntegrityError as exc:
+                st.error(
+                    f"{t('restore_integrity_failed')}: {exc}"
+                )
+
+            except Exception as exc:
+                st.error(
+                    f"{t('restore_failed')}: {exc}"
+                )
+    
 
     st.markdown("---")
     st.subheader(f"📱 {t('use_on_phone')}")
